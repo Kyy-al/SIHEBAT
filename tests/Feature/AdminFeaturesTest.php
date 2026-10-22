@@ -238,30 +238,69 @@ class AdminFeaturesTest extends TestCase
 
     public function test_admin_can_update_and_delete_teacher(): void
     {
-        $teacher = User::create([
-            'name' => 'Guru Lama',
-            'role' => 'guru',
-            'nip' => '199001012015011001',
-            'email' => 'lama@sihebat.id',
-            'password' => bcrypt('password'),
+        $classroom = Classroom::create([
+            'name' => 'X.TestGuru',
+            'grade' => 'X',
+            'academic_year_id' => $this->academicYear->id,
         ]);
 
+        // 1. Create teacher via storeTeacher (without NIP and with classroom assignment)
+        $storeResponse = $this->actingAs($this->admin)->post(route('admin.teachers.store'), [
+            'name' => 'Guru Honorer Hebat',
+            'nip' => '',
+            'email' => 'honorer@sihebat.id',
+            'gol_ruang' => 'IX',
+            'jabatan' => 'Guru Pertama',
+            'classroom_id' => $classroom->id,
+        ]);
+
+        $storeResponse->assertRedirect();
+        $storeResponse->assertSessionHas('success');
+
+        $teacher = User::where('email', 'honorer@sihebat.id')->first();
+        $this->assertNotNull($teacher);
+        $this->assertEquals('Guru Honorer Hebat', $teacher->name);
+        $this->assertNull($teacher->nip);
+        $this->assertEquals('IX', $teacher->gol_ruang);
+        $this->assertEquals('guru', $teacher->role);
+
+        // Verify classroom has this teacher assigned as homeroom
+        $classroom->refresh();
+        $this->assertEquals($teacher->id, $classroom->homeroom_teacher_id);
+
+        // 2. View teachers page with search and filter
+        $pageResponse = $this->actingAs($this->admin)->get(route('admin.teachers', [
+            'search' => 'Honorer',
+            'wali' => 'is_wali',
+        ]));
+        $pageResponse->assertStatus(200);
+        $pageResponse->assertSee('Guru Honorer Hebat');
+        $pageResponse->assertSee('X.TestGuru');
+
+        // 3. Update teacher (add NIP and reset password)
         $updateResponse = $this->actingAs($this->admin)->put(route('admin.teachers.update', $teacher), [
-            'name' => 'Guru Baru Diperbarui',
+            'name' => 'Guru Baru Diperbarui, S.Pd.',
             'nip' => '199001012015011001',
-            'email' => 'baru@sihebat.id',
+            'email' => 'honorer.updated@sihebat.id',
             'gol_ruang' => 'IV/b',
             'jabatan' => 'Guru Ahli Utama',
+            'classroom_id' => '', // unassign classroom
+            'reset_password' => 1,
         ]);
 
         $updateResponse->assertRedirect();
         $updateResponse->assertSessionHas('success');
         $this->assertDatabaseHas('users', [
             'id' => $teacher->id,
-            'name' => 'Guru Baru Diperbarui',
+            'name' => 'Guru Baru Diperbarui, S.Pd.',
+            'nip' => '199001012015011001',
             'gol_ruang' => 'IV/b',
         ]);
 
+        $classroom->refresh();
+        $this->assertNull($classroom->homeroom_teacher_id);
+
+        // 4. Delete teacher
         $deleteResponse = $this->actingAs($this->admin)->delete(route('admin.teachers.destroy', $teacher));
         $deleteResponse->assertRedirect();
         $deleteResponse->assertSessionHas('success');

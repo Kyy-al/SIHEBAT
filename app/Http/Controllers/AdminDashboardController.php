@@ -742,38 +742,90 @@ class AdminDashboardController extends Controller
         return back()->with('success', "Foto profil siswa {$user->name} berhasil dihapus dan peringatan telah diteruskan ke akun siswa.");
     }
 
-    public function teachers()
+    public function teachers(Request $request)
     {
-        $teachers = User::where('role', 'guru')
-            ->with('homeroomClassrooms')
-            ->orderBy('name')
-            ->paginate(25);
+        $search = $request->query('search');
+        $filterWali = $request->query('wali');
 
-        return view('admin.teachers', compact('teachers'));
+        $query = User::where('role', 'guru')->with('homeroomClassrooms');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('nip', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('jabatan', 'like', "%{$search}%");
+            });
+        }
+
+        if ($filterWali === 'is_wali') {
+            $query->has('homeroomClassrooms');
+        } elseif ($filterWali === 'not_wali') {
+            $query->doesntHave('homeroomClassrooms');
+        }
+
+        $teachers = $query->orderBy('name')->paginate(20)->withQueryString();
+
+        $academicYear = AcademicYear::active() ?? AcademicYear::latest()->first();
+        $classrooms = $academicYear
+            ? Classroom::where('academic_year_id', $academicYear->id)->with('homeroomTeacher')->orderBy('name')->get()
+            : Classroom::with('homeroomTeacher')->orderBy('name')->get();
+
+        $totalTeachers = User::where('role', 'guru')->count();
+        $totalWali = Classroom::whereNotNull('homeroom_teacher_id')->distinct('homeroom_teacher_id')->count();
+
+        return view('admin.teachers', compact('teachers', 'classrooms', 'search', 'filterWali', 'totalTeachers', 'totalWali'));
     }
 
     public function storeTeacher(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:100',
-            'nip' => 'required|string|max:30|unique:users,nip',
+            'nip' => 'nullable|string|max:30|unique:users,nip',
             'email' => 'nullable|email|unique:users,email',
             'gol_ruang' => 'nullable|string|max:50',
             'jabatan' => 'nullable|string|max:100',
+            'classroom_id' => 'nullable|exists:classrooms,id',
         ]);
 
-        User::create([
+        $nip = $request->input('nip');
+        $initialPassword = ! empty($nip) ? $nip : ('Guru'.strtoupper(Str::random(5)));
+
+        // If email not provided, generate a fallback unique email if NIP is also empty
+        $email = $request->input('email');
+        if (empty($email) && empty($nip)) {
+            $baseSlug = Str::slug($request->input('name'), '.');
+            if (empty($baseSlug)) {
+                $baseSlug = 'guru.'.Str::lower(Str::random(4));
+            }
+            $candidateEmail = $baseSlug.'@guru.sihebat.id';
+            $counter = 1;
+            while (User::where('email', $candidateEmail)->exists()) {
+                $candidateEmail = $baseSlug.$counter.'@guru.sihebat.id';
+                $counter++;
+            }
+            $email = $candidateEmail;
+        }
+
+        $teacher = User::create([
             'name' => $request->input('name'),
-            'nip' => $request->input('nip'),
+            'nip' => $nip ?: null,
             'gol_ruang' => $request->input('gol_ruang'),
             'jabatan' => $request->input('jabatan'),
-            'email' => $request->input('email'),
+            'email' => $email,
             'role' => 'guru',
-            'password' => Hash::make($request->input('nip')), // Default password = NIP
+            'password' => Hash::make($initialPassword),
+            'initial_password' => $initialPassword,
             'must_change_password' => true,
         ]);
 
-        return back()->with('success', 'Guru berhasil ditambahkan. Kata sandi default: NIP.');
+        if ($request->filled('classroom_id')) {
+            Classroom::where('id', $request->input('classroom_id'))->update([
+                'homeroom_teacher_id' => $teacher->id,
+            ]);
+        }
+
+        return back()->with('success', "Guru {$teacher->name} berhasil ditambahkan. Kata sandi awal: {$initialPassword}");
     }
 
     public function updateTeacher(Request $request, User $user)
@@ -782,29 +834,52 @@ class AdminDashboardController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:100',
-            'nip' => 'required|string|max:30|unique:users,nip,'.$user->id,
+            'nip' => 'nullable|string|max:30|unique:users,nip,'.$user->id,
             'email' => 'nullable|email|unique:users,email,'.$user->id,
             'gol_ruang' => 'nullable|string|max:50',
             'jabatan' => 'nullable|string|max:100',
+            'classroom_id' => 'nullable',
             'reset_password' => 'nullable|boolean',
         ]);
 
+        $nip = $request->input('nip');
+
         $data = [
             'name' => $request->input('name'),
-            'nip' => $request->input('nip'),
+            'nip' => $nip ?: null,
             'email' => $request->input('email'),
             'gol_ruang' => $request->input('gol_ruang'),
             'jabatan' => $request->input('jabatan'),
         ];
 
+        $resetMsg = '';
         if ($request->boolean('reset_password')) {
-            $data['password'] = Hash::make($request->input('nip'));
+            $newPassword = ! empty($nip) ? $nip : ('Guru'.strtoupper(Str::random(5)));
+            $data['password'] = Hash::make($newPassword);
+            $data['initial_password'] = $newPassword;
             $data['must_change_password'] = true;
+            $resetMsg = " Kata sandi berhasil direset menjadi: {$newPassword}";
         }
 
         $user->update($data);
 
-        return back()->with('success', "Data guru {$user->name} berhasil diperbarui.");
+        if ($request->has('classroom_id')) {
+            $cid = $request->input('classroom_id');
+            if ($cid) {
+                // Clear any other classrooms currently assigned to this teacher
+                Classroom::where('homeroom_teacher_id', $user->id)
+                    ->where('id', '!=', $cid)
+                    ->update(['homeroom_teacher_id' => null]);
+
+                // Assign to the selected classroom
+                Classroom::where('id', $cid)->update(['homeroom_teacher_id' => $user->id]);
+            } else {
+                // Unassign this teacher from all classrooms
+                Classroom::where('homeroom_teacher_id', $user->id)->update(['homeroom_teacher_id' => null]);
+            }
+        }
+
+        return back()->with('success', "Data guru {$user->name} berhasil diperbarui.{$resetMsg}");
     }
 
     public function destroyTeacher(User $user)
