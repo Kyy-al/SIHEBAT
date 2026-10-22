@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AcademicYear;
 use App\Models\Classroom;
 use App\Models\Habit;
 use App\Models\Journal;
 use App\Models\User;
+use App\Services\GeminiAiService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 
 class GuruDashboardController extends Controller
 {
@@ -44,6 +46,8 @@ class GuruDashboardController extends Controller
             abort(403);
         }
 
+        $classroom->load('homeroomTeacher');
+
         $students = $classroom->students()
             ->orderBy('name')
             ->get();
@@ -52,6 +56,124 @@ class GuruDashboardController extends Controller
         $stats = $this->getClassroomStats($classroom);
 
         return view('guru.classroom-detail', compact('user', 'classroom', 'students', 'habits', 'stats'));
+    }
+
+    /**
+     * Tanya Data AI: Natural language question answering for Teachers.
+     */
+    public function askDataAi(Request $request, GeminiAiService $aiService)
+    {
+        $request->validate([
+            'question' => 'required|string|max:500',
+        ]);
+
+        $user = Auth::user();
+        $rateKey = 'tanya_ai_quota:'.$user->id;
+        if (RateLimiter::tooManyAttempts($rateKey, 20)) {
+            $seconds = RateLimiter::availableIn($rateKey);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => "Batas pemakaian Tanya Data AI tercapai. Silakan coba lagi dalam {$seconds} detik.",
+            ], 429);
+        }
+        RateLimiter::hit($rateKey, 3600);
+
+        $classroom = Auth::user()->homeroomClassrooms()->first();
+        $result = $aiService->answerDataQuestion($request->input('question'), $classroom?->id);
+
+        if ($result['source'] === 'authorization_filter') {
+            return response()->json([
+                'status' => 'forbidden',
+                'message' => $result['answer'],
+                'question' => $request->input('question'),
+                'answer' => $result['answer'],
+                'source' => $result['source'],
+                'details' => $result['details'] ?? null,
+            ], 403);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'question' => $request->input('question'),
+            'answer' => $result['answer'],
+            'source' => $result['source'],
+            'details' => $result['details'] ?? null,
+        ]);
+    }
+
+    /**
+     * Printable Classroom Official Rapor Pendidikan Report.
+     */
+    public function printReport(Classroom $classroom)
+    {
+        $user = Auth::user();
+
+        // Ensure teacher owns this classroom
+        if ($classroom->homeroom_teacher_id !== $user->id) {
+            abort(403);
+        }
+
+        $classroom->load('homeroomTeacher');
+
+        $students = $classroom->students()->orderBy('name')->get();
+        $habits = Habit::where('is_active', true)->orderBy('order')->get();
+        $stats = $this->getClassroomStats($classroom);
+
+        $schoolProfile = [
+            'name' => 'SMAN 1 SUNGAILIAT',
+            'npsn' => '10900232',
+            'address' => 'JL. PEMUDA SUNGAILIAT, Kelurahan Bukit Betung, Kec. Sungailiat',
+            'city' => 'Kab. Bangka, Prov. Kepulauan Bangka Belitung',
+            'accreditation' => 'A',
+            'year' => date('Y'),
+        ];
+
+        return view('guru.report-print', compact(
+            'classroom',
+            'students',
+            'habits',
+            'stats',
+            'schoolProfile'
+        ));
+    }
+
+    /**
+     * Download Classroom Official Rapor Pendidikan Report as Native PDF (Barryvdh/DomPDF).
+     */
+    public function downloadReportPdf(Classroom $classroom)
+    {
+        $user = Auth::user();
+
+        if ($classroom->homeroom_teacher_id !== $user->id) {
+            abort(403);
+        }
+
+        $classroom->load('homeroomTeacher');
+        $students = $classroom->students()->orderBy('name')->get();
+        $habits = Habit::where('is_active', true)->orderBy('order')->get();
+        $stats = $this->getClassroomStats($classroom);
+
+        $schoolProfile = [
+            'name' => 'SMAN 1 SUNGAILIAT',
+            'npsn' => '10900232',
+            'address' => 'JL. PEMUDA SUNGAILIAT, Kelurahan Bukit Betung, Kec. Sungailiat',
+            'city' => 'Kab. Bangka, Prov. Kepulauan Bangka Belitung',
+            'accreditation' => 'A',
+            'year' => date('Y'),
+        ];
+
+        $pdf = Pdf::loadView('guru.report-print', compact(
+            'classroom',
+            'students',
+            'habits',
+            'stats',
+            'schoolProfile'
+        ));
+
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->download("rapor_kelas_{$classroom->name}.pdf");
     }
 
     /**

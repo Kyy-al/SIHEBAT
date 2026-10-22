@@ -34,7 +34,7 @@
                 Luar Biasa, {{ explode(' ', $user->name)[0] }}! 🎉
             </h1>
             <p class="text-sm font-semibold text-ink-700 mt-2">
-                Kamu telah menyelesaikan <strong class="text-ink-900 font-extrabold">{{ $result['habits_completed'] }} dari 7</strong> kebiasaan hebat hari ini.
+                Kamu telah menyelesaikan <strong class="text-ink-900 font-extrabold">{{ $result['habits_completed'] ?? 0 }} dari 7</strong> kebiasaan hebat hari ini.
             </p>
         </div>
 
@@ -44,7 +44,7 @@
                 <div class="text-center">
                     <span class="text-xs font-bold text-ink-500 uppercase tracking-wider block">XP Didapat</span>
                     <span class="text-3xl font-extrabold text-amber-600 tabular-nums">
-                        +{{ $result['xp_earned'] }}
+                        +{{ $result['xp_earned'] ?? 0 }}
                     </span>
                     <span class="text-xs font-bold text-amber-700 block">XP</span>
                 </div>
@@ -54,20 +54,66 @@
                     <div class="flex items-center justify-center gap-1">
                         <span class="text-2xl animate-flame">🔥</span>
                         <span class="text-3xl font-extrabold text-coral tabular-nums">
-                            {{ $result['streak'] }}
+                            {{ $result['streak'] ?? $result['current_streak'] ?? 0 }}
                         </span>
                     </div>
                     <span class="text-xs font-bold text-coral block">Hari Beruntun</span>
                 </div>
             </div>
 
-            @if($result['is_perfect_day'])
+            @if(!empty($result['is_perfect_day']))
                 <div class="rounded-2xl p-3.5 bg-gradient-to-r from-sun-soft to-sun/30 border border-sun flex items-center justify-center gap-2">
                     <span class="text-2xl">👑</span>
                     <div class="text-left">
                         <p class="text-xs font-extrabold text-ink-900 uppercase tracking-wider">Perfect Day Bonus Tercapai!</p>
                         <p class="text-[11px] font-semibold text-ink-700">7 dari 7 kebiasaan selesai. Bonus +30 XP diberikan!</p>
                     </div>
+                </div>
+            @endif
+
+            {{-- Streak Freeze Alert --}}
+            @if(!empty($result['freeze_used']))
+                <div class="rounded-2xl p-3 bg-sky-50 border border-sky-300 flex items-center gap-2.5 text-left">
+                    <span class="text-2xl">🧊</span>
+                    <div>
+                        <p class="text-xs font-extrabold text-sky-900">Pelindung Streak Berhasil Digunakan!</p>
+                        <p class="text-[11px] text-sky-800 font-semibold">Streak apimu tetap aman walau sempat terlewat satu hari.</p>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Newly Awarded Badges --}}
+            @if(!empty($result['new_badges']))
+                <div class="rounded-2xl p-3.5 bg-lavender-soft/70 border border-purple-300 text-left space-y-2">
+                    <span class="chip bg-purple-700 text-white text-[10px] font-black uppercase">
+                        🎉 Lencana Baru Terbuka!
+                    </span>
+                    <div class="space-y-1.5">
+                        @foreach($result['new_badges'] as $nb)
+                            <div class="flex items-center gap-2 text-xs font-bold text-ink-900">
+                                <span>🎖️</span>
+                                <div>
+                                    <span class="font-extrabold">{{ $nb['name'] }}</span>
+                                    <span class="text-[11px] text-ink-500 font-semibold block">{{ $nb['description'] }}</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+            {{-- Completed Missions --}}
+            @if(!empty($result['completed_missions']))
+                <div class="rounded-2xl p-3 bg-mint-soft border border-mint text-left space-y-1">
+                    <span class="chip bg-mint text-ink-900 text-[10px] font-black uppercase">
+                        🎯 Misi Mingguan Selesai!
+                    </span>
+                    @foreach($result['completed_missions'] as $cm)
+                        <p class="text-xs font-bold text-emerald-900 flex items-center justify-between">
+                            <span>{{ $cm['title'] }}</span>
+                            <span class="chip-xp text-[10px] py-0 px-1.5">+{{ $cm['xp'] }} XP</span>
+                        </p>
+                    @endforeach
                 </div>
             @endif
         </div>

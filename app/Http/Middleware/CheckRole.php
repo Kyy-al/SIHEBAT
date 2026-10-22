@@ -11,16 +11,16 @@ class CheckRole
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     * @param  string  ...$roles
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        if (! $request->user() || ! in_array($request->user()->role, $roles)) {
-            if ($request->user()) {
-                return redirect()->route($request->user()->role . '.dashboard');
-            }
+        if (! $request->user()) {
             return redirect()->route('login');
+        }
+
+        if (! in_array($request->user()->role, $roles)) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengakses halaman ini.');
         }
 
         return $next($request);

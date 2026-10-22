@@ -137,9 +137,16 @@
         font-feature-settings: 'cv11' 1;
     }
 
+    [x-cloak] {
+        display: none !important;
+    }
+
     /* Tanpa italic di seluruh aplikasi */
+    *, *::before, *::after {
+        font-style: normal !important;
+    }
     em, i, cite, address, dfn, var {
-        font-style: normal;
+        font-style: normal !important;
     }
 
     .italic {
@@ -442,7 +449,35 @@
     .stagger-4 { animation-delay: 200ms; }
     .stagger-5 { animation-delay: 250ms; }
     .stagger-6 { animation-delay: 300ms; }
-    .stagger-7 { animation-delay: 350ms; }
+    /* Kemendikbud Rapor & Custom Dashboard Utilities */
+    .card-rapor-navy {
+        background: linear-gradient(145deg, #0F2A43 0%, #15395B 100%) !important;
+        color: #ffffff !important;
+    }
+
+    .badge-rapor-green {
+        background-color: #059669 !important;
+        color: #ffffff !important;
+    }
+
+    /* Podium Gamification */
+    .podium-step-gold {
+        background: linear-gradient(180deg, #FBBF24 0%, #D97706 100%);
+        border-top: 4px solid #FDE68A;
+        box-shadow: 0 10px 25px -5px rgba(217, 119, 6, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+    }
+
+    .podium-step-silver {
+        background: linear-gradient(180deg, #CBD5E1 0%, #94A3B8 100%);
+        border-top: 4px solid #F1F5F9;
+        box-shadow: 0 8px 20px -5px rgba(100, 116, 139, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+    }
+
+    .podium-step-bronze {
+        background: linear-gradient(180deg, #D97706 0%, #92400E 100%);
+        border-top: 4px solid #FDE68A;
+        box-shadow: 0 8px 20px -5px rgba(146, 64, 14, 0.3), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+    }
 }
 
 /* ============================================

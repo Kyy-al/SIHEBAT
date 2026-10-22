@@ -18,13 +18,9 @@
     {{-- Login card --}}
     <div class="relative z-10 card w-full max-w-sm p-6 sm:p-8">
         <div class="text-center mb-6">
-            <div class="flex items-center justify-center gap-2 mb-3">
-                <div class="size-10 rounded-2xl bg-primary-400 flex items-center justify-center">
-                    <span class="text-xl font-extrabold text-ink-900">S</span>
-                </div>
-                <h1 class="text-2xl font-extrabold text-ink-900">SiHebat</h1>
+            <div class="flex justify-center">
+                <x-logo size="md" subtitle="7 Kebiasaan Anak Indonesia Hebat" />
             </div>
-            <p class="text-sm text-ink-500 font-medium">Dashboard 7 Kebiasaan Anak Indonesia Hebat</p>
         </div>
 
         <form method="POST" action="{{ route('login.submit') }}">

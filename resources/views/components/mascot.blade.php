@@ -22,139 +22,156 @@
     } : '';
 @endphp
 
-<div class="inline-flex items-center justify-center {{ $dimensions }} {{ $animationClass }} select-none" {{ $attributes }} aria-hidden="true">
-    <svg viewBox="0 0 160 160" class="w-full h-full drop-shadow-sm" fill="none" xmlns="http://www.w3.org/2000/svg">
+<div class="inline-flex items-center justify-center {{ $dimensions }} {{ $animationClass }} select-none relative" {{ $attributes }} aria-hidden="true">
+    <svg viewBox="0 0 160 160" class="w-full h-full drop-shadow-md" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
-            <!-- Soft Gradient for Mascot Body -->
-            <linearGradient id="mascotBody" x1="40" y1="20" x2="120" y2="140" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#E0F2FE" />
-                <stop offset="50%" stop-color="#BAE6FD" />
-                <stop offset="100%" stop-color="#7DD3FC" />
+            <!-- Cloud Body Gradient (Sky Blue) -->
+            <linearGradient id="cloudGrad" x1="80" y1="25" x2="80" y2="135" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#FFFFFF" />
+                <stop offset="35%" stop-color="#E0F2FE" />
+                <stop offset="100%" stop-color="#BAE6FD" />
             </linearGradient>
-            <!-- Star Gradient -->
-            <linearGradient id="starGrad" x1="80" y1="8" x2="80" y2="34" gradientUnits="userSpaceOnUse">
+
+            <!-- Ear / Tuft Gradient -->
+            <linearGradient id="tuftGrad" x1="80" y1="12" x2="80" y2="35" gradientUnits="userSpaceOnUse">
                 <stop offset="0%" stop-color="#FFDD55" />
                 <stop offset="100%" stop-color="#FFB020" />
             </linearGradient>
-            <!-- Shadow under mascot -->
-            <radialGradient id="bottomShadow" cx="80" cy="148" r="50" fx="80" fy="148" gradientUnits="userSpaceOnUse">
-                <stop offset="0%" stop-color="#0F2A43" stop-opacity="0.12" />
+
+            <!-- Shadow beneath mascot -->
+            <radialGradient id="cloudShadow" cx="80" cy="146" r="48" fx="80" fy="146" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#0F2A43" stop-opacity="0.14" />
                 <stop offset="100%" stop-color="#0F2A43" stop-opacity="0" />
             </radialGradient>
         </defs>
 
-        <!-- Ground shadow -->
-        <ellipse cx="80" cy="146" rx="42" ry="7" fill="url(#bottomShadow)" />
+        <!-- Soft ground shadow -->
+        <ellipse cx="80" cy="146" rx="42" ry="7" fill="url(#cloudShadow)" />
 
-        <!-- Star / Tuft on head -->
-        <g id="mascot-star">
-            <path d="M 80 10 L 83 22 L 95 24 L 85 31 L 88 42 L 80 35 L 72 42 L 75 31 L 65 24 L 77 22 Z" fill="url(#starGrad)" stroke="#FFAA00" stroke-width="1.5" stroke-linejoin="round" />
-            <circle cx="80" cy="26" r="3" fill="#FFFBEB" />
+        <!-- Cute Star / Tuft accessory on top -->
+        <g id="star-tuft">
+            <path d="M 80 14 L 83 23 L 93 25 L 85 31 L 87 40 L 80 34 L 73 40 L 75 31 L 67 25 L 77 23 Z"
+                  fill="url(#tuftGrad)"
+                  stroke="#FF9E0B"
+                  stroke-width="1.5"
+                  stroke-linejoin="round" />
+            <circle cx="80" cy="27" r="2.5" fill="#FFFBEB" />
         </g>
 
-        <!-- Main Body (Friendly Blob) -->
-        <path d="M 46 64
-                 C 40 40, 60 30, 80 30
-                 C 100 30, 120 40, 114 64
-                 C 126 80, 128 108, 116 126
-                 C 104 142, 56 142, 44 126
-                 C 32 108, 34 80, 46 64 Z"
-              fill="url(#mascotBody)"
+        <!-- Puffy Cloud Body (Inspired by reference Image 2) -->
+        <!-- Lobes: Left lobe, top left lobe, middle crown, top right lobe, right lobe, bottom flat curve -->
+        <path d="M 46 126
+                 C 28 126, 20 106, 26 90
+                 C 20 78, 26 62, 40 56
+                 C 46 42, 62 38, 76 42
+                 C 86 36, 102 38, 110 50
+                 C 126 52, 138 66, 134 82
+                 C 144 96, 138 116, 122 124
+                 C 112 130, 56 130, 46 126 Z"
+              fill="url(#cloudGrad)"
               stroke="#0284C7"
               stroke-width="3.5"
               stroke-linejoin="round" />
 
-        <!-- Body Highlight / Sheen -->
-        <path d="M 54 48 C 66 38, 86 38, 96 44 C 92 46, 70 44, 58 54 C 54 52, 54 50, 54 48 Z" fill="#FFFFFF" opacity="0.6" />
+        <!-- Cloud inner highlight shine -->
+        <path d="M 44 64 C 54 50, 74 46, 88 48 C 76 52, 54 56, 44 68 Z" fill="#FFFFFF" opacity="0.8" />
+        <path d="M 104 54 C 114 60, 124 70, 126 80 C 122 72, 114 62, 104 56 Z" fill="#FFFFFF" opacity="0.6" />
 
-        <!-- Cheeks (Blush) -->
-        <ellipse cx="50" cy="95" rx="7" ry="4.5" fill="#FF8FB1" opacity="0.85" />
-        <ellipse cx="110" cy="95" rx="7" ry="4.5" fill="#FF8FB1" opacity="0.85" />
+        <!-- Rosy Blush Cheeks (Bubblegum pink, like reference!) -->
+        <ellipse cx="44" cy="95" rx="7" ry="5" fill="#FF8FB1" opacity="0.85" />
+        <ellipse cx="116" cy="95" rx="7" ry="5" fill="#FF8FB1" opacity="0.85" />
 
-        <!-- State-specific Arms -->
+        <!-- Arms based on state -->
         @if($state === 'melambai')
-            <!-- Left hand resting -->
-            <path d="M 38 98 C 28 102, 28 114, 38 112" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" fill="none" />
-            <!-- Right hand waving high -->
-            <path d="M 118 88 C 132 80, 142 66, 136 56 C 130 50, 122 62, 114 74" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="#BAE6FD" />
-            <!-- Wave lines -->
-            <path d="M 142 50 C 146 54, 146 60, 142 64" stroke="#38BDF8" stroke-width="2" stroke-linecap="round" fill="none" />
+            <!-- Left hand cute resting -->
+            <path d="M 32 98 C 22 102, 24 114, 34 112" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" fill="none" />
+            <!-- Right hand waving high up -->
+            <path d="M 124 90 C 138 82, 146 66, 138 54 C 130 48, 124 64, 118 78" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="#E0F2FE" />
+            <!-- Waving energy sparkles -->
+            <path d="M 144 48 C 148 52, 148 58, 144 62" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round" fill="none" />
+            <path d="M 150 52 C 153 55, 153 59, 150 62" stroke="#38BDF8" stroke-width="2" stroke-linecap="round" fill="none" />
         @elseif($state === 'semangat')
             <!-- Both hands raised like fist pump -->
-            <path d="M 40 92 C 26 84, 26 70, 36 68 C 42 74, 44 84, 44 92" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" fill="#BAE6FD" />
-            <path d="M 120 92 C 134 84, 134 70, 124 68 C 118 74, 116 84, 116 92" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" fill="#BAE6FD" />
+            <path d="M 34 94 C 20 84, 22 68, 32 68 C 38 74, 38 86, 38 94" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" fill="#E0F2FE" />
+            <path d="M 126 94 C 140 84, 138 68, 128 68 C 122 74, 122 86, 122 94" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" fill="#E0F2FE" />
         @elseif($state === 'merayakan')
-            <!-- Hands up in excitement -->
-            <path d="M 40 88 C 24 74, 28 58, 38 60 C 44 68, 46 80, 44 88" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" fill="#BAE6FD" />
-            <path d="M 120 88 C 136 74, 132 58, 122 60 C 116 68, 114 80, 116 88" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" fill="#BAE6FD" />
-            <!-- Confetti around -->
-            <rect x="25" y="35" width="5" height="5" rx="1" fill="#FFC93C" transform="rotate(25 25 35)" />
-            <rect x="130" y="38" width="5" height="5" rx="1" fill="#FF7A59" transform="rotate(-30 130 38)" />
-            <circle cx="28" cy="70" r="3" fill="#34D399" />
-            <circle cx="135" cy="72" r="3" fill="#A78BFA" />
+            <!-- Hands up in joy -->
+            <path d="M 34 88 C 18 72, 24 56, 34 58 C 40 68, 40 80, 38 88" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" fill="#E0F2FE" />
+            <path d="M 126 88 C 142 72, 136 56, 126 58 C 120 68, 120 80, 122 88" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" fill="#E0F2FE" />
+            <!-- Party Confetti sparkles around -->
+            <rect x="22" y="32" width="5" height="5" rx="1.5" fill="#FFC93C" transform="rotate(25 22 32)" />
+            <rect x="134" y="34" width="5" height="5" rx="1.5" fill="#FF7A59" transform="rotate(-30 134 34)" />
+            <circle cx="24" cy="68" r="3" fill="#34D399" />
+            <circle cx="138" cy="70" r="3" fill="#A78BFA" />
+            <path d="M 80 6 L 82 10 L 86 10 L 83 13 L 84 17 L 80 14 L 76 17 L 77 13 L 74 10 L 78 10 Z" fill="#FFC93C" />
         @elseif($state === 'berpikir')
-            <!-- Right hand touching chin -->
-            <path d="M 38 100 C 28 105, 30 115, 40 112" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" fill="none" />
-            <path d="M 118 106 C 118 106, 106 108, 98 102 C 94 98, 98 92, 102 94" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" fill="#BAE6FD" />
+            <!-- One hand touching chin -->
+            <path d="M 32 98 C 22 102, 24 114, 34 112" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" fill="none" />
+            <path d="M 122 104 C 122 104, 110 106, 100 100 C 96 96, 100 90, 104 92" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" fill="#E0F2FE" />
             <!-- Question dots -->
-            <circle cx="126" cy="42" r="2.5" fill="#38BDF8" />
-            <circle cx="134" cy="32" r="3.5" fill="#38BDF8" />
-            <text x="138" y="26" font-size="16" font-weight="bold" fill="#0284C7">?</text>
+            <circle cx="130" cy="40" r="2.5" fill="#38BDF8" />
+            <circle cx="138" cy="30" r="3.5" fill="#38BDF8" />
+            <text x="140" y="24" font-size="16" font-weight="extrabold" fill="#0284C7">?</text>
         @else
-            <!-- Default cute stubby arms -->
-            <path d="M 40 98 C 30 102, 30 112, 40 112" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" fill="none" />
-            <path d="M 120 98 C 130 102, 130 112, 120 112" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" fill="none" />
+            <!-- Cute stubby hands -->
+            <path d="M 34 98 C 24 102, 24 112, 34 112" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" fill="none" />
+            <path d="M 126 98 C 136 102, 136 112, 126 112" stroke="#0284C7" stroke-width="3.5" stroke-linecap="round" fill="none" />
         @endif
 
-        <!-- Eyes & Mouth based on state -->
+        <!-- Eyes and Mouth -->
         @if($state === 'senang' || $state === 'merayakan')
-            <!-- Happy curved eyes (^ ^) -->
-            <path d="M 58 82 C 63 75, 71 75, 76 82" stroke="#0F2A43" stroke-width="3.5" stroke-linecap="round" fill="none" />
-            <path d="M 84 82 C 89 75, 97 75, 102 82" stroke="#0F2A43" stroke-width="3.5" stroke-linecap="round" fill="none" />
-            <!-- Big open smile -->
-            <path d="M 68 94 C 68 106, 92 106, 92 94 Z" fill="#0F2A43" />
-            <path d="M 73 99 C 76 104, 84 104, 87 99 Z" fill="#FF8FB1" />
+            <!-- Happy curved eyes (^ ^) with thick playful lines -->
+            <path d="M 54 82 C 60 74, 68 74, 74 82" stroke="#0F2A43" stroke-width="4" stroke-linecap="round" fill="none" />
+            <path d="M 86 82 C 92 74, 100 74, 106 82" stroke="#0F2A43" stroke-width="4" stroke-linecap="round" fill="none" />
+            <!-- Big open cheerful smile with pink tongue -->
+            <path d="M 66 94 C 66 108, 94 108, 94 94 Z" fill="#0F2A43" />
+            <path d="M 72 101 C 76 106, 84 106, 88 101 Z" fill="#FF8FB1" />
         @elseif($state === 'semangat')
-            <!-- Determined cute eyes -->
-            <circle cx="68" cy="80" r="5" fill="#0F2A43" />
-            <circle cx="70" cy="78" r="1.8" fill="#FFFFFF" />
-            <circle cx="92" cy="80" r="5" fill="#0F2A43" />
-            <circle cx="94" cy="78" r="1.8" fill="#FFFFFF" />
+            <!-- Determined glossy eyes -->
+            <circle cx="64" cy="80" r="6" fill="#0F2A43" />
+            <circle cx="66" cy="78" r="2.2" fill="#FFFFFF" />
+            <circle cx="62" cy="82" r="1.2" fill="#FFFFFF" />
+            <circle cx="96" cy="80" r="6" fill="#0F2A43" />
+            <circle cx="98" cy="78" r="2.2" fill="#FFFFFF" />
+            <circle cx="94" cy="82" r="1.2" fill="#FFFFFF" />
             <!-- Confident smile -->
-            <path d="M 70 94 C 76 102, 88 100, 92 93" stroke="#0F2A43" stroke-width="3.5" stroke-linecap="round" fill="none" />
+            <path d="M 68 94 C 74 102, 86 102, 92 94" stroke="#0F2A43" stroke-width="3.5" stroke-linecap="round" fill="none" />
         @elseif($state === 'sedih')
             <!-- Droopy soft eyes -->
-            <ellipse cx="67" cy="83" rx="4.5" ry="5.5" fill="#0F2A43" />
-            <circle cx="69" cy="81" r="1.5" fill="#FFFFFF" />
-            <ellipse cx="93" cy="83" rx="4.5" ry="5.5" fill="#0F2A43" />
-            <circle cx="95" cy="81" r="1.5" fill="#FFFFFF" />
-            <!-- Tear on left cheek -->
-            <path d="M 53 92 C 51 96, 55 98, 55 95 Z" fill="#38BDF8" />
-            <!-- Soft sad mouth -->
+            <ellipse cx="64" cy="83" rx="5" ry="6" fill="#0F2A43" />
+            <circle cx="66" cy="81" r="1.8" fill="#FFFFFF" />
+            <ellipse cx="96" cy="83" rx="5" ry="6" fill="#0F2A43" />
+            <circle cx="98" cy="81" r="1.8" fill="#FFFFFF" />
+            <!-- Cute tear drop -->
+            <path d="M 50 93 C 48 97, 52 99, 52 96 Z" fill="#38BDF8" />
+            <!-- Gentle sad curve -->
             <path d="M 72 102 C 76 97, 84 97, 88 102" stroke="#0F2A43" stroke-width="3" stroke-linecap="round" fill="none" />
         @elseif($state === 'tidur')
-            <!-- Sleeping eyes (- -) -->
-            <path d="M 60 84 C 65 86, 73 86, 76 84" stroke="#0F2A43" stroke-width="3" stroke-linecap="round" fill="none" />
-            <path d="M 84 84 C 87 86, 95 86, 100 84" stroke="#0F2A43" stroke-width="3" stroke-linecap="round" fill="none" />
-            <!-- Calm small smile -->
+            <!-- Sleeping calm eyes (- -) -->
+            <path d="M 56 84 C 62 86, 70 86, 74 84" stroke="#0F2A43" stroke-width="3.5" stroke-linecap="round" fill="none" />
+            <path d="M 86 84 C 90 86, 98 86, 104 84" stroke="#0F2A43" stroke-width="3.5" stroke-linecap="round" fill="none" />
             <path d="M 76 96 C 78 98, 82 98, 84 96" stroke="#0F2A43" stroke-width="2.5" stroke-linecap="round" fill="none" />
-            <!-- Zzz text -->
-            <text x="122" y="55" font-size="14" font-weight="bold" fill="#6366F1">z</text>
-            <text x="130" y="42" font-size="18" font-weight="bold" fill="#6366F1">Z</text>
+            <!-- Zzz text in purple/indigo -->
+            <text x="122" y="52" font-size="14" font-weight="extrabold" fill="#6366F1">z</text>
+            <text x="130" y="38" font-size="18" font-weight="extrabold" fill="#6366F1">Z</text>
         @elseif($state === 'bingung')
-            <!-- One eye big, one small -->
-            <circle cx="66" cy="80" r="6" fill="#0F2A43" />
-            <circle cx="68" cy="78" r="2" fill="#FFFFFF" />
-            <circle cx="94" cy="81" r="3.5" fill="#0F2A43" />
-            <!-- Wavy mouth -->
-            <path d="M 71 96 C 75 99, 81 94, 87 97" stroke="#0F2A43" stroke-width="3" stroke-linecap="round" fill="none" />
+            <!-- Big anime confused eyes -->
+            <circle cx="62" cy="80" r="7" fill="#0F2A43" />
+            <circle cx="64" cy="77" r="2.5" fill="#FFFFFF" />
+            <circle cx="98" cy="81" r="4" fill="#0F2A43" />
+            <!-- Wavy cute mouth -->
+            <path d="M 70 96 C 74 99, 80 93, 86 97" stroke="#0F2A43" stroke-width="3.5" stroke-linecap="round" fill="none" />
         @else
-            <!-- Standard friendly happy face (melambai, idle, berpikir) -->
-            <circle cx="66" cy="80" r="5" fill="#0F2A43" />
-            <circle cx="68" cy="78" r="1.8" fill="#FFFFFF" />
-            <circle cx="94" cy="80" r="5" fill="#0F2A43" />
-            <circle cx="96" cy="78" r="1.8" fill="#FFFFFF" />
-            <!-- Gentle curved smile -->
+            <!-- Standard lovely friendly anime eyes (like Image 2!) -->
+            <ellipse cx="64" cy="80" rx="5.5" ry="6.5" fill="#0F2A43" />
+            <circle cx="66" cy="77.5" r="2.2" fill="#FFFFFF" />
+            <circle cx="62" cy="82" r="1.2" fill="#FFFFFF" />
+
+            <ellipse cx="96" cy="80" rx="5.5" ry="6.5" fill="#0F2A43" />
+            <circle cx="98" cy="77.5" r="2.2" fill="#FFFFFF" />
+            <circle cx="94" cy="82" r="1.2" fill="#FFFFFF" />
+
+            <!-- Soft curved smile -->
             <path d="M 72 94 C 76 100, 84 100, 88 94" stroke="#0F2A43" stroke-width="3.5" stroke-linecap="round" fill="none" />
         @endif
     </svg>

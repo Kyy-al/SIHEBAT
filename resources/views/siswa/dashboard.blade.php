@@ -3,171 +3,304 @@
 @section('title', 'Beranda Siswa — SiHebat')
 
 @section('content')
-<div class="max-w-5xl mx-auto px-4 py-4 sm:py-6 space-y-6">
+<div class="max-w-4xl mx-auto px-4 py-4 sm:py-6 space-y-5"
+     x-data="{
+        streakModal: false,
+        notifModal: false,
+        hasNotifPermission: ('Notification' in window && Notification.permission === 'granted'),
+        requestNotif() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(p => {
+                    this.hasNotifPermission = (p === 'granted');
+                    if (p === 'granted') {
+                        new Notification('SiHebat 7 Kebiasaan', {
+                            body: 'Pengingat harian aktif! Terus jaga api streak kebiasaan hebatmu.',
+                            icon: '/favicon.ico'
+                        });
+                    }
+                });
+            }
+        }
+     }">
 
-    {{-- Top Header: Greeting & Gamification Chips --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-ink-900 tracking-tight">
-                Halo, {{ explode(' ', $user->name)[0] }}! 👋
+    {{-- Top Bar (Matching Image 2 phone header) --}}
+    <div class="flex items-center justify-between gap-3">
+        <div class="min-w-0">
+            <h1 class="text-xl sm:text-2xl font-extrabold text-ink-900 tracking-tight flex items-center gap-1.5 truncate">
+                <span>Halo, {{ explode(' ', $user->name)[0] }}!</span>
+                <span class="inline-block animate-wiggle">👋</span>
             </h1>
-            <p class="text-sm font-semibold text-ink-500 mt-0.5">
-                {{ $user->currentClassroom() ? 'Kelas ' . $user->currentClassroom()->name : 'Siswa Hebat' }} · Siap jalani hari penuh kebiasaan baik?
-            </p>
+            <div class="flex items-center gap-2 mt-0.5">
+                <span class="inline-flex items-center gap-1 text-xs font-bold text-ink-500 bg-white/80 border border-ink-100 rounded-full px-2.5 py-0.5">
+                    <span>🏫</span>
+                    <span>{{ $user->currentClassroom() ? 'Kelas ' . $user->currentClassroom()->name : 'SMAN 1 Sungailiat' }}</span>
+                </span>
+            </div>
         </div>
 
-        <div class="flex items-center gap-2 flex-wrap">
-            {{-- Streak Chip --}}
-            <div class="chip-streak text-sm py-1.5 px-3.5 shadow-sm">
+        {{-- Top Right: Streak, XP & Notification Bell --}}
+        <div class="flex items-center gap-2 shrink-0">
+            {{-- Notification Bell --}}
+            @php
+                $habitsDoneToday = $todayJournal ? $todayJournal->habits_completed : 0;
+                $hasUnreadNotif = ($habitsDoneToday < 7) || !empty($user->avatar_warning);
+            @endphp
+            <button type="button"
+                    @click="notifModal = true"
+                    class="size-9 sm:size-10 rounded-2xl bg-white border border-ink-100 shadow-xs flex items-center justify-center text-base sm:text-lg hover:bg-primary-50 transition relative"
+                    title="Pusat Notifikasi & Pengingat">
+                <span>🔔</span>
+                @if($hasUnreadNotif)
+                    <span class="absolute 1 top-1 right-1 size-2.5 rounded-full bg-rose-500 ring-2 ring-white animate-ping"></span>
+                    <span class="absolute top-1 right-1 size-2.5 rounded-full bg-rose-500 ring-2 ring-white"></span>
+                @endif
+            </button>
+
+            {{-- Streak Pill (Clickable -> Opens Duolingo Evolution Modal) --}}
+            <button type="button"
+                    @click="streakModal = true"
+                    class="chip-streak py-1.5 px-3 rounded-full shadow-sm text-xs sm:text-sm cursor-pointer hover:scale-105 active:scale-95 transition-transform flex items-center gap-1"
+                    title="Lihat Peta Evolusi Maskot Streak Duolingo">
                 <span class="animate-flame inline-block">🔥</span>
-                <span class="tabular-nums font-extrabold">{{ $user->current_streak }}</span>
-                <span>hari</span>
-            </div>
+                <span class="font-black tabular-nums">{{ $user->current_streak }}</span>
+                <span class="hidden sm:inline">Hari</span>
+            </button>
 
-            {{-- XP Chip --}}
-            <div class="chip-xp text-sm py-1.5 px-3.5 shadow-sm">
+            {{-- XP Pill --}}
+            <div class="chip-xp py-1.5 px-3 rounded-full shadow-sm text-xs sm:text-sm">
                 <span>⭐</span>
-                <span class="tabular-nums font-extrabold">{{ $user->xp }}</span>
-                <span>XP</span>
-            </div>
-
-            {{-- Level Badge --}}
-            <div class="chip bg-lavender-soft text-purple-800 text-sm py-1.5 px-3 shadow-sm">
-                <span>🎖️</span>
-                <span class="font-extrabold">Lvl {{ $user->level }}</span>
+                <span class="font-black tabular-nums">{{ $user->xp }}</span>
+                <span class="hidden sm:inline">XP</span>
             </div>
         </div>
     </div>
 
-    {{-- Hero Card & Weekly Calendar Grid --}}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {{-- Hero Card (2 cols on lg) --}}
-        <div class="lg:col-span-2 card-hero flex flex-col justify-between min-h-[220px]">
-            {{-- Background decorative shapes --}}
-            <div class="absolute -right-12 -top-12 size-56 rounded-full bg-white/20 pointer-events-none"></div>
-            <div class="absolute right-24 -bottom-16 size-48 rounded-full bg-primary-300/30 pointer-events-none"></div>
+    {{-- Daily Journal Reminder Notification Banner (Duolingo Style: Friendly & Time-Aware) --}}
+    @php
+        $completedCount = $todayJournal ? $todayJournal->habits_completed : 0;
+        $remainingCount = 7 - $completedCount;
+        $currentHour = Carbon\Carbon::now()->hour;
+    @endphp
 
-            <div class="relative z-10 flex items-start justify-between gap-4">
-                <div class="max-w-md">
-                    <span class="inline-block px-3 py-1 rounded-full bg-white/40 text-ink-900 text-xs font-extrabold uppercase tracking-wider mb-2">
-                        {{ Carbon\Carbon::today()->locale('id')->isoFormat('dddd, D MMMM Y') }}
-                    </span>
+    @if($remainingCount > 0)
+        <div class="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border-2 border-amber-300 shadow-sm relative overflow-hidden transition-all hover:border-amber-400">
+            <div class="flex items-start sm:items-center justify-between gap-3 flex-col sm:flex-row">
+                <div class="flex items-start gap-3.5 min-w-0">
+                    <div class="size-12 rounded-2xl bg-amber-400 text-ink-950 flex items-center justify-center text-2xl shrink-0 shadow-xs ring-4 ring-amber-200">
+                        ⏰
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="chip bg-amber-400 text-ink-950 text-[10px] py-0.5 px-2 font-black uppercase tracking-wider">
+                                PENGINGAT JURNAL HARI INI
+                            </span>
+                            @if($currentHour >= 18)
+                                <span class="chip bg-rose-500 text-white text-[10px] py-0.5 px-2 font-black animate-pulse">
+                                    ⚠️ Sebelum 23:59 WIB!
+                                </span>
+                            @endif
+                        </div>
 
-                    @if($todayJournal && $todayJournal->habits_completed > 0)
-                        <h2 class="text-2xl sm:text-3xl font-extrabold text-ink-900 leading-tight">
-                            Hebat! Jurnalmu hari ini sudah tercatat 🎉
-                        </h2>
-                        <p class="text-sm font-semibold text-ink-900/80 mt-1">
-                            Kamu telah menyelesaikan <strong class="text-ink-900 font-extrabold">{{ $todayJournal->habits_completed }} dari 7</strong> kebiasaan hari ini (+{{ $todayJournal->xp_earned }} XP didapat).
+                        <h3 class="text-sm sm:text-base font-black text-ink-900 mt-1 leading-snug">
+                            @if($completedCount === 0)
+                                Jangan Lupa Isi Jurnal 7 Kebiasaan Hebatmu Hari Ini! 🌟
+                            @else
+                                Tinggal {{ $remainingCount }} Kebiasaan Lagi Menuju Hari Sempurna! 👑
+                            @endif
+                        </h3>
+                        <p class="text-xs font-semibold text-ink-600 mt-0.5">
+                            @if($user->current_streak > 0)
+                                Jaga api streak <strong class="text-orange-600 font-black">🔥 {{ $user->current_streak }} hari</strong> kamu agar tidak padam dan kumpulkan bonus XP!
+                            @else
+                                Catat kebiasaan hari ini untuk menyalakan kembali api streak maskotmu!
+                            @endif
                         </p>
-                    @else
-                        <h2 class="text-2xl sm:text-3xl font-extrabold text-ink-900 leading-tight">
-                            Ayo isi jurnal hari ini! 🌟
-                        </h2>
-                        <p class="text-sm font-semibold text-ink-900/80 mt-1">
-                            Cuma butuh 2 menit untuk jaga api streak-mu tetap menyala dan kumpulkan XP!
-                        </p>
-                    @endif
+                    </div>
                 </div>
 
-                <div class="hidden sm:block shrink-0">
-                    <x-mascot :state="$todayJournal && $todayJournal->habits_completed > 0 ? 'senang' : 'melambai'" size="lg" />
+                <div class="flex items-center gap-2 w-full sm:w-auto shrink-0 pt-1 sm:pt-0">
+                    <a href="{{ route('siswa.journal', ['date' => Carbon\Carbon::today()->format('Y-m-d')]) }}"
+                       class="btn flex-1 sm:flex-initial py-2.5 px-5 bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-ink-950 text-xs sm:text-sm font-black shadow-md rounded-2xl flex items-center justify-center gap-2 transition-transform hover:scale-102">
+                        <span>Isi Jurnal Sekarang</span>
+                        <span>✍️</span>
+                    </a>
                 </div>
             </div>
+        </div>
+    @endif
 
-            <div class="relative z-10 pt-4 flex items-center gap-3">
-                <a href="{{ route('siswa.journal') }}" class="btn-dark text-sm sm:text-base px-6">
-                    @if($todayJournal)
-                        Perbarui Jurnal ({{ $todayJournal->habits_completed }}/7)
-                    @else
-                        Isi Jurnal Sekarang
-                    @endif
-                    <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="currentColor" viewBox="0 0 256 256">
-                        <path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"/>
-                    </svg>
+    {{-- Moderation Warning Notification --}}
+    @if($user->avatar_warning)
+        <div class="p-4 rounded-3xl bg-amber-50 border-2 border-amber-300 text-amber-950 flex items-start gap-3.5 shadow-sm">
+            <div class="size-10 rounded-2xl bg-amber-200 text-amber-900 flex items-center justify-center text-xl shrink-0">
+                ⚠️
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2">
+                    <h4 class="font-black text-sm text-amber-950">Peringatan Foto Profil dari Pihak Sekolah</h4>
+                    <a href="{{ route('siswa.profile') }}" class="text-xs font-black text-amber-900 underline hover:text-amber-950 shrink-0">
+                        Ganti Foto di Profil →
+                    </a>
+                </div>
+                <p class="text-xs font-medium text-amber-900 mt-0.5">
+                    "{{ $user->avatar_warning }}"
+                </p>
+                <p class="text-[11px] font-bold text-amber-800 mt-1.5">
+                    Silakan buka menu Profil untuk mengunggah foto baru yang pantas (berseragam sekolah). Peringatan ini otomatis selesai setelah foto baru tersimpan.
+                </p>
+            </div>
+        </div>
+    @endif
+
+    {{-- Hero Card (Executive Balanced UI/UX: Evolving Duolingo-style Streak Mascot on Stage) --}}
+    <div class="card-hero rounded-3xl p-4 sm:p-6 shadow-md relative overflow-hidden bg-gradient-to-r from-primary-400 via-primary-300 to-primary-400 space-y-3.5">
+        {{-- Curved Background Waves & Bubbles --}}
+        <div class="absolute -right-6 -top-6 size-40 rounded-full bg-white/20 pointer-events-none"></div>
+        <div class="absolute right-24 -bottom-12 size-36 rounded-full bg-primary-200/40 pointer-events-none"></div>
+
+        {{-- Top Section: Greeting & Duolingo-style Streak Mascot Stage (Side by Side & Equal Weight) --}}
+        <div class="relative z-10 flex items-center justify-between gap-3 sm:gap-4">
+            <div class="min-w-0 flex-1 space-y-1.5 sm:space-y-2">
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/75 text-ink-900 text-[10px] sm:text-[11px] font-black uppercase tracking-wider shadow-xs">
+                    <span>📅</span>
+                    <span>{{ Carbon\Carbon::today()->locale('id')->isoFormat('dddd, D MMMM Y') }}</span>
+                </div>
+
+                @if($todayJournal && $todayJournal->habits_completed > 0)
+                    <h2 class="text-base sm:text-2xl font-black text-ink-900 leading-tight">
+                        Hebat, Jurnalmu Sudah Tercatat! 🎉
+                    </h2>
+                    <p class="text-xs sm:text-sm font-semibold text-ink-900/85">
+                        Tuntas <strong class="text-ink-900 font-black">{{ $todayJournal->habits_completed }} dari 7</strong> kebiasaan (+{{ $todayJournal->xp_earned }} XP).
+                    </p>
+                @else
+                    <h2 class="text-base sm:text-2xl font-black text-ink-900 leading-tight">
+                        Ayo Isi Jurnal Hari Ini! 🌟
+                    </h2>
+                    <p class="text-xs sm:text-sm font-semibold text-ink-900/85">
+                        Cuma butuh 2 menit untuk jaga api streak dan kumpulkan XP!
+                    </p>
+                @endif
+            </div>
+
+            {{-- Evolving Streak Mascot Stage: Duolingo Flame Evolution with Click to View Roadmap --}}
+            <div class="shrink-0 relative flex flex-col items-center justify-center cursor-pointer group hover:scale-105 active:scale-95 transition-transform"
+                 @click="streakModal = true"
+                 title="Klik untuk melihat evolusi maskot streak Duolingo-mu!">
+                <x-mascot-streak :streak="$user->current_streak" size="lg" :showLabel="true" />
+                <span class="text-[9px] font-black text-primary-950 bg-white/70 px-2 py-0.5 rounded-full mt-1 group-hover:bg-white shadow-2xs">
+                    Peta Evolusi ➔
+                </span>
+            </div>
+        </div>
+
+        {{-- Bottom Section: Full-Width Dedicated Action Row (Ergonomic for Thumbs) --}}
+        <div class="relative z-10 pt-2.5 border-t border-ink-900/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <a href="{{ route('siswa.journal', ['date' => $today->format('Y-m-d')]) }}"
+               class="btn-dark flex-1 sm:flex-initial text-xs sm:text-sm py-2.5 px-5 rounded-2xl shadow-btn-dark active:translate-y-0.5 flex items-center justify-center gap-2 font-black">
+                @if($todayJournal)
+                    <span>Perbarui Jurnal ({{ $todayJournal->habits_completed }}/7)</span>
+                @else
+                    <span>Isi Jurnal Sekarang</span>
+                    <span>→</span>
+                @endif
+            </a>
+
+            <div class="flex items-center gap-2">
+                <a href="{{ route('siswa.rapor') }}"
+                   class="btn-soft flex-1 sm:flex-initial text-xs py-2 px-3.5 rounded-xl shadow-btn-soft text-center font-bold">
+                    📊 Rapor Saya
                 </a>
 
                 @if($user->streak_freezes > 0)
-                    <div class="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/40 text-xs font-bold text-ink-900">
+                    <span class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/80 text-[10px] sm:text-[11px] font-extrabold text-ink-900 shadow-xs shrink-0">
                         <span>🧊</span>
-                        <span>Pelindung Streak: {{ $user->streak_freezes }}</span>
-                    </div>
+                        <span>Pelindung: {{ $user->streak_freezes }}</span>
+                    </span>
                 @endif
-            </div>
-        </div>
-
-        {{-- Weekly Progress Dots Card --}}
-        <div class="card flex flex-col justify-between">
-            <div>
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="font-extrabold text-ink-900 text-base">Jejak Minggu Ini</h3>
-                    <span class="text-xs font-bold text-primary-700">7 Hari</span>
-                </div>
-                <p class="text-xs text-ink-500 font-medium mb-4">
-                    Pertahankan titik agar selalu berwarna untuk streak tanpa putus!
-                </p>
-
-                <div class="grid grid-cols-7 gap-1.5 sm:gap-2 text-center">
-                    @foreach($weekDays as $day)
-                        <div class="flex flex-col items-center gap-1.5">
-                            <span class="text-[11px] font-bold text-ink-500 uppercase">
-                                {{ substr($day['day_name'], 0, 3) }}
-                            </span>
-
-                            @if($day['is_perfect'])
-                                <div class="week-dot-perfect {{ $day['is_today'] ? 'week-dot-today' : '' }}" title="Hari Sempurna (7/7)">
-                                    ★
-                                </div>
-                            @elseif($day['completed'] >= 4)
-                                <div class="week-dot-full {{ $day['is_today'] ? 'week-dot-today' : '' }}" title="{{ $day['completed'] }}/7 kebiasaan">
-                                    {{ $day['completed'] }}
-                                </div>
-                            @elseif($day['completed'] > 0)
-                                <div class="week-dot-partial {{ $day['is_today'] ? 'week-dot-today' : '' }}" title="{{ $day['completed'] }}/7 kebiasaan">
-                                    {{ $day['completed'] }}
-                                </div>
-                            @else
-                                <div class="week-dot-empty {{ $day['is_today'] ? 'week-dot-today' : '' }}" title="Belum diisi">
-                                    {{ $day['is_future'] ? '·' : '○' }}
-                                </div>
-                            @endif
-
-                            <span class="text-[10px] font-bold {{ $day['is_today'] ? 'text-primary-700 font-extrabold' : 'text-ink-500' }}">
-                                {{ $day['date']->format('d') }}
-                            </span>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-
-            {{-- Legend info --}}
-            <div class="border-t border-ink-100 pt-3 mt-3 flex items-center justify-between text-[11px] text-ink-500 font-semibold">
-                <span class="flex items-center gap-1">
-                    <span class="size-2 rounded-full bg-sun"></span> Sempurna
-                </span>
-                <span class="flex items-center gap-1">
-                    <span class="size-2 rounded-full bg-primary-400"></span> Aktif
-                </span>
-                <span class="flex items-center gap-1">
-                    <span class="size-2 rounded-full border border-ink-300"></span> Kosong
-                </span>
             </div>
         </div>
     </div>
 
-    {{-- Today's 7 Habits Cards --}}
+    {{-- H-1 Backfill Alert if Yesterday is missing (FR-JRN-03) --}}
+    @if(!$yesterdayJournal)
+        <div class="rounded-3xl p-4 bg-amber-50 border border-amber-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">⏳</span>
+                <div>
+                    <h4 class="text-xs sm:text-sm font-black text-amber-950">
+                        Jurnal Kemarin Belum Terisi ({{ $yesterday->locale('id')->isoFormat('dddd, D MMMM') }})
+                    </h4>
+                    <p class="text-[11px] text-amber-800 font-semibold mt-0.5">
+                        Kamu masih bisa mengisi jurnal kemarin untuk menyelamatkan catatan kebiasaanmu!
+                    </p>
+                </div>
+            </div>
+            <a href="{{ route('siswa.journal', ['date' => $yesterday->format('Y-m-d')]) }}" class="btn-primary text-xs font-black py-2 px-4 shadow-btn shrink-0">
+                Isi Jurnal Kemarin (H-1)
+            </a>
+        </div>
+    @endif
+
+    {{-- Weekly Calendar Dot Matrix (Directly inspired by Image 2 middle phone) --}}
+    <div class="card p-4 sm:p-5 border border-ink-100 shadow-card">
+        <div class="flex items-center justify-between mb-3">
+            <div>
+                <h3 class="font-extrabold text-ink-900 text-sm sm:text-base">Jejak Kebiasaan Minggu Ini</h3>
+                <p class="text-[11px] text-ink-500 font-semibold">Titik terisi menandakan jurnal harianmu telah tuntas</p>
+            </div>
+            <span class="chip bg-primary-100 text-primary-900 text-xs font-black">7 Hari</span>
+        </div>
+
+        <div class="grid grid-cols-7 gap-2 text-center pt-1">
+            @foreach($weekDays as $day)
+                <div class="flex flex-col items-center gap-1.5">
+                    <span class="text-[11px] font-extrabold text-ink-500 uppercase">
+                        {{ substr($day['day_name'], 0, 3) }}
+                    </span>
+
+                    {{-- Circular date badge like reference Image 2 --}}
+                    @if($day['is_perfect'])
+                        <div class="size-9 rounded-full bg-sun text-ink-900 font-black text-xs flex items-center justify-center shadow-sm {{ $day['is_today'] ? 'ring-4 ring-primary-400 ring-offset-2' : '' }}" title="Hari Sempurna 7/7">
+                            ★
+                        </div>
+                    @elseif($day['completed'] >= 4)
+                        <div class="size-9 rounded-full bg-primary-400 text-ink-900 font-black text-xs flex items-center justify-center shadow-sm {{ $day['is_today'] ? 'ring-4 ring-primary-500 ring-offset-2' : '' }}" title="{{ $day['completed'] }}/7 kebiasaan">
+                            {{ $day['completed'] }}
+                        </div>
+                    @elseif($day['completed'] > 0)
+                        <div class="size-9 rounded-full bg-primary-200 text-primary-900 font-bold text-xs flex items-center justify-center {{ $day['is_today'] ? 'ring-4 ring-primary-400 ring-offset-2' : '' }}" title="{{ $day['completed'] }}/7 kebiasaan">
+                            {{ $day['completed'] }}
+                        </div>
+                    @else
+                        <div class="size-9 rounded-full border-2 border-ink-200 text-ink-400 font-bold text-xs flex items-center justify-center {{ $day['is_today'] ? 'ring-4 ring-primary-400 ring-offset-2 border-primary-400 text-primary-700' : '' }}">
+                            {{ $day['is_future'] ? '·' : '○' }}
+                        </div>
+                    @endif
+
+                    <span class="text-[11px] font-extrabold {{ $day['is_today'] ? 'text-primary-800' : 'text-ink-700' }}">
+                        {{ $day['date']->format('d') }}
+                    </span>
+                </div>
+            @endforeach
+        </div>
+    </div>
+
+    {{-- Today's 7 Habits Cards (Visual Grid) --}}
     <div class="space-y-3">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-lg sm:text-xl font-extrabold text-ink-900">7 Kebiasaan Hari Ini</h2>
-                <p class="text-xs font-semibold text-ink-500">Capaian hari ini: {{ $todayJournal ? $todayJournal->habits_completed : 0 }} dari 7 selesai</p>
+                <h2 class="text-base sm:text-lg font-extrabold text-ink-900">7 Kebiasaan Hari Ini</h2>
+                <p class="text-xs font-semibold text-ink-500">
+                    Capaian: <strong class="text-ink-900">{{ $todayJournal ? $todayJournal->habits_completed : 0 }} dari 7</strong> kebiasaan selesai
+                </p>
             </div>
-            <a href="{{ route('siswa.journal') }}" class="btn-ghost text-xs sm:text-sm">
-                Buka Formulir Jurnal →
+            <a href="{{ route('siswa.journal') }}" class="btn-ghost text-xs font-bold">
+                Buka Jurnal →
             </a>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
             @php
                 $entryMap = [];
                 if ($todayJournal) {
@@ -192,158 +325,407 @@
                     };
                 @endphp
 
-                <div class="rounded-3xl p-4 {{ $bgClass }} border border-black/5 flex flex-col justify-between transition-transform hover:-translate-y-0.5">
+                <a href="{{ route('siswa.journal') }}" class="rounded-3xl p-3.5 sm:p-4 {{ $bgClass }} border border-black/5 flex flex-col justify-between hover:scale-[1.02] transition-transform shadow-xs">
                     <div class="flex items-start justify-between">
-                        <div class="size-11 rounded-2xl bg-white/80 shadow-sm flex items-center justify-center text-xl">
-                            @switch($habit->slug)
-                                @case('bangun-pagi') 🌅 @break
-                                @case('beribadah') 🤲 @break
-                                @case('berolahraga') 🏃 @break
-                                @case('makan-sehat') 🥗 @break
-                                @case('gemar-belajar') 📚 @break
-                                @case('bermasyarakat') 🤝 @break
-                                @case('tidur-cepat') 🌙 @break
-                                @default ⭐
-                            @endswitch
+                        <div class="size-11 rounded-2xl bg-white/95 shadow-sm flex items-center justify-center p-1">
+                            <x-mascot-habit :habit="$habit->slug" size="sm" />
                         </div>
 
                         @if($isDone)
-                            <span class="chip-status-baik text-[11px] py-0.5 px-2.5">
+                            <span class="chip-status-baik text-[10px] py-0.5 px-2 font-extrabold">
                                 ✓ Selesai
                             </span>
                         @else
-                            <span class="chip bg-white/80 text-ink-500 text-[11px] py-0.5 px-2.5">
-                                Belum
+                            <span class="chip bg-white/80 text-ink-500 text-[10px] py-0.5 px-2 font-bold">
+                                +10 XP
                             </span>
                         @endif
                     </div>
 
-                    <div class="mt-3">
-                        <h4 class="font-extrabold text-ink-900 text-sm sm:text-base leading-snug">
+                    <div class="mt-2.5">
+                        <h4 class="font-extrabold text-ink-900 text-xs sm:text-sm leading-snug">
                             {{ $habit->name }}
                         </h4>
-                        <div class="flex items-center justify-between mt-2 text-xs font-bold text-ink-700">
-                            <span>+{{ $habit->xp_reward }} XP</span>
-                            @if($isDone)
-                                <span class="text-emerald-700 text-[11px]">Tercatat</span>
-                            @else
-                                <span class="text-ink-500 text-[11px] underline">Isi sekarang</span>
-                            @endif
-                        </div>
+                        <span class="text-[10px] font-bold {{ $isDone ? 'text-emerald-800' : 'text-ink-500' }} mt-0.5 block">
+                            {{ $isDone ? 'Telah tercatat' : 'Belum diisi' }}
+                        </span>
                     </div>
-                </div>
+                </a>
             @endforeach
 
-            {{-- 8th Card: Bonus Perfect Day --}}
-            <div class="rounded-3xl p-4 bg-sun-soft border border-sun/20 flex flex-col justify-between">
+            {{-- 8th Card: Perfect Day Bonus --}}
+            <div class="rounded-3xl p-3.5 sm:p-4 bg-sun-soft border border-sun/30 flex flex-col justify-between shadow-xs">
                 <div class="flex items-start justify-between">
-                    <div class="size-11 rounded-2xl bg-white/90 shadow-sm flex items-center justify-center text-xl">
-                        👑
+                    <div class="size-11 rounded-2xl bg-white/95 shadow-sm flex items-center justify-center p-1">
+                        <x-mascot-habit habit="hari-sempurna" size="sm" />
                     </div>
-                    <span class="chip bg-sun text-ink-900 text-[11px] py-0.5 px-2.5 font-extrabold">
+                    <span class="chip bg-sun text-ink-900 text-[10px] py-0.5 px-2 font-black">
                         +30 XP
                     </span>
                 </div>
-                <div class="mt-3">
-                    <h4 class="font-extrabold text-ink-900 text-sm sm:text-base">
+                <div class="mt-2.5">
+                    <h4 class="font-extrabold text-ink-900 text-xs sm:text-sm">
                         Hari Sempurna
                     </h4>
-                    <p class="text-xs font-semibold text-ink-700 mt-1">
-                        Selesaikan ke-7 kebiasaan sekaligus hari ini untuk klaim bonus!
-                    </p>
+                    <span class="text-[10px] font-bold text-amber-900 mt-0.5 block">
+                        Klaim bonus 7/7
+                    </span>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- Classroom Mini-Leaderboard & Motivation Card --}}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {{-- Leaderboard Preview (2 cols) --}}
-        <div class="lg:col-span-2 card">
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <h3 class="font-extrabold text-ink-900 text-base sm:text-lg">Peringkat Kelas Teratas</h3>
-                    <p class="text-xs font-semibold text-ink-500">Persaingan sehat untuk memupuk konsistensi kebiasaan</p>
+    {{-- Weekly Missions (FR-GAM-06) --}}
+    @if(count($weeklyMissions) > 0)
+    <div class="card p-4 sm:p-5 border border-ink-100 shadow-card space-y-3">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="font-extrabold text-ink-900 text-sm sm:text-base flex items-center gap-1.5">
+                    <span></span>
+                    <span>Misi Minggu Ini</span>
+                </h3>
+                <p class="text-[11px] text-ink-500 font-semibold">Tantangan mingguan untuk dapat bonus XP ekstra</p>
+            </div>
+            <span class="chip bg-primary-100 text-primary-900 text-xs font-black">
+                {{ count(array_filter($weeklyMissions, fn($m) => $m['is_completed'])) }} / {{ count($weeklyMissions) }} Tuntas
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            @foreach($weeklyMissions as $wm)
+                @php
+                    $m = $wm['mission'];
+                    $um = $wm['user_mission'];
+                @endphp
+                <div class="p-3.5 rounded-2xl border transition {{ $wm['is_completed'] ? 'bg-mint-soft/60 border-mint/40' : 'bg-surface border-ink-100' }}">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex items-center gap-2.5">
+                            <div class="size-9 rounded-xl flex items-center justify-center text-lg {{ $wm['is_completed'] ? 'bg-mint text-white' : 'bg-primary-100 text-primary-800' }}">
+                                @if($wm['is_completed'])
+                                    ✓
+                                @else
+                                    @switch($m->icon)
+                                        @case('barbell') <x-mascot-habit habit="berolahraga" size="xs" /> @break
+                                        @case('sun') <x-mascot-habit habit="bangun-pagi" size="xs" /> @break
+                                        @case('book-open') <x-mascot-habit habit="gemar-belajar" size="xs" /> @break
+                                        @case('trophy') <x-mascot-habit habit="hari-sempurna" size="xs" /> @break
+                                        @default 🎯
+                                    @endswitch
+                                @endif
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-xs sm:text-sm text-ink-900 leading-snug">{{ $m->title }}</h4>
+                                <span class="chip-xp text-[10px] py-0.2 px-1.5 font-black">+{{ $m->xp_reward }} XP</span>
+                            </div>
+                        </div>
+
+                        <span class="text-xs font-extrabold text-ink-700 tabular-nums shrink-0">
+                            {{ $um->current_count }} / {{ $m->target_count }}
+                        </span>
+                    </div>
+
+                    <p class="text-[11px] text-ink-500 font-medium mt-2 leading-relaxed">
+                        {{ $m->description }}
+                    </p>
+
+                    <div class="progress-track h-2 mt-2 bg-ink-100">
+                        <div class="progress-fill {{ $wm['is_completed'] ? 'bg-mint' : 'bg-primary-400' }}" style="width: {{ $wm['progress'] }}%"></div>
+                    </div>
                 </div>
-                <a href="{{ route('siswa.leaderboard') }}" class="btn-ghost text-xs sm:text-sm">
-                    Lihat Semua →
-                </a>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
+    {{-- Classroom Leaderboard Snippet --}}
+    <div class="card p-4 sm:p-5 border border-ink-100 shadow-card">
+        <div class="flex items-center justify-between mb-3">
+            <div>
+                <h3 class="font-extrabold text-ink-900 text-sm sm:text-base">Peringkat Kelas Teratas</h3>
+                <p class="text-xs font-semibold text-ink-500">Semangat menjaga konsistensi bersama teman sekelas</p>
+            </div>
+            <a href="{{ route('siswa.leaderboard') }}" class="btn-ghost text-xs font-bold">
+                Lihat Semua 🏆
+            </a>
+        </div>
+
+        <div class="space-y-2">
+            @foreach($leaderboard as $index => $st)
+                @php
+                    $isMe = $st->id === $user->id;
+                    $medal = match($index) {
+                        0 => '🥇',
+                        1 => '🥈',
+                        2 => '🥉',
+                        default => '#' . ($index + 1),
+                    };
+                @endphp
+                <div class="flex items-center justify-between p-2.5 rounded-2xl {{ $isMe ? 'bg-primary-100 border border-primary-300' : 'bg-surface hover:bg-canvas' }}">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <span class="w-6 text-center font-extrabold text-sm tabular-nums text-ink-700">
+                            {{ $medal }}
+                        </span>
+                        <div class="avatar size-8 text-xs font-black shrink-0 overflow-hidden ring-1 ring-ink-200">
+                            @if($st->avatar_url)
+                                <img src="{{ $st->avatar_url }}" alt="{{ $st->name }}" class="w-full h-full object-cover">
+                            @else
+                                {{ substr($st->name, 0, 1) }}
+                            @endif
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs sm:text-sm font-bold text-ink-900 truncate">
+                                {{ $st->name }}
+                                @if($isMe)
+                                    <span class="chip bg-primary-400 text-ink-900 text-[9px] py-0 px-1.5 font-black ml-1">Kamu</span>
+                                @endif
+                            </p>
+                            <span class="text-[10px] font-semibold text-ink-500">
+                                🔥 {{ $st->current_streak }} hari beruntun
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="text-right shrink-0">
+                        <span class="text-sm font-black text-ink-900 tabular-nums">{{ $st->xp }}</span>
+                        <span class="text-xs font-bold text-amber-600">XP</span>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+
+    {{-- MODAL EVOLUSI MASKOT STREAK (DUOLINGO STYLE) --}}
+    <div x-show="streakModal"
+         x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-900/60 backdrop-blur-xs"
+         @keydown.escape.window="streakModal = false">
+        <div class="card p-5 sm:p-6 max-w-xl w-full border-2 border-primary-300 shadow-2xl space-y-4 bg-white rounded-3xl max-h-[90vh] overflow-y-auto"
+             @click.away="streakModal = false">
+
+            <div class="flex items-center justify-between pb-3 border-b border-ink-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="size-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center text-xl shadow-xs">
+                        🔥
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-ink-900 text-base sm:text-lg">Peta Evolusi Maskot Streak</h3>
+                        <p class="text-xs text-ink-500 font-semibold">Semakin panjang streak-mu, wujud maskotmu semakin keren!</p>
+                    </div>
+                </div>
+                <button type="button" @click="streakModal = false" class="text-ink-400 hover:text-ink-700 text-xl font-black p-1">
+                    ✕
+                </button>
             </div>
 
-            @if(count($leaderboard) > 0)
-                <div class="space-y-2">
-                    @foreach($leaderboard as $index => $student)
-                        @php
-                            $isMe = $student->id === $user->id;
-                            $medal = match($index) {
-                                0 => '🥇',
-                                1 => '🥈',
-                                2 => '🥉',
-                                default => '#' . ($index + 1),
-                            };
-                        @endphp
-                        <div class="flex items-center justify-between p-3 rounded-2xl transition-colors {{ $isMe ? 'bg-primary-100 border border-primary-300' : 'bg-surface hover:bg-canvas' }}">
-                            <div class="flex items-center gap-3 min-w-0">
-                                <span class="text-sm font-extrabold w-6 text-center tabular-nums text-ink-700">
-                                    {{ $medal }}
-                                </span>
-                                <div class="avatar shrink-0 size-9 text-xs">
-                                    {{ substr($student->name, 0, 1) }}
-                                </div>
-                                <div class="min-w-0">
-                                    <p class="text-sm font-bold text-ink-900 truncate">
-                                        {{ $student->name }}
-                                        @if($isMe)
-                                            <span class="ml-1 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full bg-primary-400 text-ink-900">Kamu</span>
-                                        @endif
-                                    </p>
-                                    <p class="text-xs text-ink-500 font-semibold">
-                                        🔥 {{ $student->current_streak }} hari beruntun
-                                    </p>
-                                </div>
+            {{-- Current Streak Stage Showcase --}}
+            <div class="p-4 rounded-3xl bg-gradient-to-br from-primary-50 via-amber-50/60 to-primary-100/40 border border-primary-200 text-center relative overflow-hidden">
+                <span class="inline-block text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-primary-400 text-ink-950 mb-2">
+                    WUJUD MASKOTMU SAAT INI
+                </span>
+
+                <div class="py-2 flex justify-center">
+                    <x-mascot-streak :streak="$user->current_streak" size="xl" :showLabel="true" />
+                </div>
+
+                <div class="max-w-sm mx-auto mt-2">
+                    <p class="text-xs font-semibold text-ink-600">
+                        @if($user->current_streak === 0)
+                            Streak kamu sedang padam! Catat kebiasaan hari ini untuk membangkitkan wujud <strong>Percikan Semangat</strong>!
+                        @elseif($user->current_streak < 3)
+                            Hebat! Pertahankan {{ 3 - $user->current_streak }} hari lagi untuk berevolusi menjadi wujud <strong>Api Membara</strong>!
+                        @elseif($user->current_streak < 7)
+                            Keren banget! {{ 7 - $user->current_streak }} hari lagi menuju wujud ksatria <strong>Ksatria Api</strong>!
+                        @elseif($user->current_streak < 14)
+                            Luar biasa! {{ 14 - $user->current_streak }} hari lagi menuju wujud <strong>Pahlawan Hebat</strong>!
+                        @elseif($user->current_streak < 30)
+                            Spektakuler! {{ 30 - $user->current_streak }} hari lagi menuju status tertinggi <strong>Legenda Abadi</strong>!
+                        @else
+                            👑 Kamu telah mencapai puncak evolusi maskot tertinggi: <strong>Legenda Abadi</strong>!
+                        @endif
+                    </p>
+                </div>
+            </div>
+
+            {{-- All 6 Tiers Evolution Ladder --}}
+            <div class="space-y-2">
+                <h4 class="text-xs font-extrabold text-ink-700 uppercase tracking-wider">Tingkatan Evolusi Maskot:</h4>
+
+                @php
+                    $tiersData = [
+                        [
+                            'name' => 'Api Padam',
+                            'req'  => 0,
+                            'badge' => 'Streak 0 Hari',
+                            'desc' => 'Maskot sedang beristirahat/membeku saat api streak padam.',
+                            'active' => $user->current_streak === 0,
+                            'unlocked' => true,
+                        ],
+                        [
+                            'name' => 'Percikan Semangat',
+                            'req'  => 1,
+                            'badge' => 'Streak 1 - 2 Hari',
+                            'desc' => 'Langkah awal pembiasaan, maskot memegang percikan api mungil.',
+                            'active' => $user->current_streak >= 1 && $user->current_streak < 3,
+                            'unlocked' => $user->current_streak >= 1,
+                        ],
+                        [
+                            'name' => 'Api Membara',
+                            'req'  => 3,
+                            'badge' => 'Streak 3 - 6 Hari',
+                            'desc' => 'Api di atas kepala mulai menyala berkobar dengan penuh percaya diri.',
+                            'active' => $user->current_streak >= 3 && $user->current_streak < 7,
+                            'unlocked' => $user->current_streak >= 3,
+                        ],
+                        [
+                            'name' => 'Ksatria Api',
+                            'req'  => 7,
+                            'badge' => 'Streak 7 - 13 Hari',
+                            'desc' => 'Mengenakan bandana ksatria merah dengan obor api membara.',
+                            'active' => $user->current_streak >= 7 && $user->current_streak < 14,
+                            'unlocked' => $user->current_streak >= 7,
+                        ],
+                        [
+                            'name' => 'Pahlawan Hebat',
+                            'req'  => 14,
+                            'badge' => 'Streak 14 - 29 Hari',
+                            'desc' => 'Mengenakan jubah pahlawan merah gagah dan kacamata hitam keren!',
+                            'active' => $user->current_streak >= 14 && $user->current_streak < 30,
+                            'unlocked' => $user->current_streak >= 14,
+                        ],
+                        [
+                            'name' => 'Legenda Abadi',
+                            'req'  => 30,
+                            'badge' => 'Streak 30+ Hari',
+                            'desc' => 'Mahkota emas bertatah permata api dengan aura kosmik super bersinar!',
+                            'active' => $user->current_streak >= 30,
+                            'unlocked' => $user->current_streak >= 30,
+                        ],
+                    ];
+                @endphp
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    @foreach($tiersData as $td)
+                        <div class="p-3 rounded-2xl border transition-all flex items-center gap-3 {{ $td['active'] ? 'bg-amber-50/90 border-amber-400 ring-2 ring-amber-300 shadow-sm' : ($td['unlocked'] ? 'bg-white border-ink-200' : 'bg-slate-50 border-slate-200 opacity-60') }}">
+                            <div class="shrink-0">
+                                <x-mascot-streak :streak="$td['req']" size="md" :animate="$td['active']" />
                             </div>
 
-                            <div class="text-right shrink-0">
-                                <span class="text-sm font-extrabold text-ink-900 tabular-nums">{{ $student->xp }}</span>
-                                <span class="text-xs font-bold text-amber-600">XP</span>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center justify-between gap-1">
+                                    <h5 class="font-extrabold text-xs text-ink-900 truncate">{{ $td['name'] }}</h5>
+                                    @if($td['active'])
+                                        <span class="chip bg-amber-400 text-ink-950 text-[9px] py-0 px-1.5 font-black">Aktif</span>
+                                    @elseif($td['unlocked'])
+                                        <span class="text-mint text-xs font-bold">✓</span>
+                                    @else
+                                        <span class="text-ink-400 text-xs">🔒</span>
+                                    @endif
+                                </div>
+                                <span class="text-[10px] font-bold text-ink-500 block">{{ $td['badge'] }}</span>
+                                <p class="text-[10px] text-ink-500 mt-0.5 line-clamp-2 leading-relaxed">{{ $td['desc'] }}</p>
                             </div>
                         </div>
                     @endforeach
                 </div>
-            @else
-                <div class="text-center py-8">
-                    <p class="text-sm text-ink-500 font-semibold">Belum ada data peringkat kelas.</p>
-                </div>
-            @endif
+            </div>
+
+            <div class="pt-3 border-t border-ink-100 flex items-center justify-between gap-3">
+                <span class="text-xs text-ink-500 font-semibold">
+                    💡 Isi jurnal setiap hari sebelum jam 23:59 agar streak-mu terus bertambah!
+                </span>
+                <button type="button" @click="streakModal = false" class="btn-dark text-xs font-bold py-2 px-4 rounded-xl">
+                    Tutup
+                </button>
+            </div>
         </div>
+    </div>
 
-        {{-- Level & Mascot Motivation Card --}}
-        <div class="card flex flex-col justify-between text-center p-6 bg-gradient-to-b from-primary-50 to-white">
-            <div>
-                <x-mascot state="semangat" size="md" />
-                <h4 class="font-extrabold text-ink-900 text-base mt-2">
-                    Level {{ $user->level }}: {{ $user->level_name }}
-                </h4>
-                <p class="text-xs text-ink-500 font-medium mt-1">
-                    Kumpulkan XP untuk naik ke tingkat berikutnya!
-                </p>
+    {{-- MODAL PUSAT NOTIFIKASI & PENGINGAT (NOTIFICATION CENTER) --}}
+    <div x-show="notifModal"
+         x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink-900/60 backdrop-blur-xs"
+         @keydown.escape.window="notifModal = false">
+        <div class="card p-5 sm:p-6 max-w-lg w-full border-2 border-primary-300 shadow-2xl space-y-4 bg-white rounded-3xl"
+             @click.away="notifModal = false">
 
-                {{-- XP Progress bar --}}
-                <div class="mt-4 text-left">
-                    <div class="flex justify-between text-xs font-bold mb-1">
-                        <span class="text-ink-700">Kemajuan Level</span>
-                        <span class="text-primary-700">{{ $user->xp_progress }}%</span>
+            <div class="flex items-center justify-between pb-3 border-b border-ink-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="size-10 rounded-2xl bg-primary-100 text-primary-800 flex items-center justify-center text-xl">
+                        🔔
                     </div>
-                    <div class="progress-track">
-                        <div class="progress-fill" style="width: {{ $user->xp_progress }}%"></div>
+                    <div>
+                        <h3 class="font-extrabold text-ink-900 text-base">Pusat Notifikasi & Pengingat</h3>
+                        <p class="text-xs text-ink-500 font-semibold">Pemberitahuan aktivitas dan pengingat pembiasaan</p>
                     </div>
+                </div>
+                <button type="button" @click="notifModal = false" class="text-ink-400 hover:text-ink-700 text-xl font-black p-1">
+                    ✕
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                {{-- 1. Pengingat Jurnal Harian --}}
+                <div class="p-3.5 rounded-2xl border {{ $remainingCount > 0 ? 'bg-amber-50 border-amber-300' : 'bg-emerald-50 border-emerald-300' }} flex items-start gap-3">
+                    <div class="size-9 rounded-xl flex items-center justify-center text-lg shrink-0 {{ $remainingCount > 0 ? 'bg-amber-200 text-amber-900' : 'bg-emerald-200 text-emerald-900' }}">
+                        {{ $remainingCount > 0 ? '⏰' : '✓' }}
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <h4 class="font-bold text-xs sm:text-sm text-ink-900">
+                            {{ $remainingCount > 0 ? 'Jurnal Harian Belum Lengkap' : 'Jurnal Hari Ini Sudah Tuntas!' }}
+                        </h4>
+                        <p class="text-xs text-ink-600 mt-0.5">
+                            {{ $completedCount }}/7 kebiasaan tercatat hari ini. {{ $remainingCount > 0 ? 'Selesaikan sebelum pukul 23:59 WIB agar streak tidak padam.' : 'Kerja bagus, kamu meraih predikat Hari Sempurna!' }}
+                        </p>
+                        @if($remainingCount > 0)
+                            <a href="{{ route('siswa.journal', ['date' => Carbon\Carbon::today()->format('Y-m-d')]) }}"
+                               class="btn text-xs font-black py-1 px-3 bg-amber-400 text-ink-950 hover:bg-amber-500 rounded-lg mt-2 inline-flex items-center gap-1 shadow-xs">
+                                <span>Isi Sekarang</span>
+                                <span>✍️</span>
+                            </a>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- 2. Status Pelindung Streak (Streak Freeze) --}}
+                <div class="p-3.5 rounded-2xl bg-sky-50 border border-sky-200 flex items-start gap-3">
+                    <div class="size-9 rounded-xl bg-sky-200 text-sky-900 flex items-center justify-center text-lg shrink-0">
+                        🧊
+                    </div>
+                    <div class="min-w-0 flex-1">
+                        <h4 class="font-bold text-xs sm:text-sm text-ink-900">Pelindung Streak (Streak Freeze)</h4>
+                        <p class="text-xs text-ink-600 mt-0.5">
+                            @if($user->streak_freezes > 0)
+                                Tersedia <strong>{{ $user->streak_freezes }}x</strong> pelindung aktif. Streak-mu otomatis terlindungi jika kamu lupa mengisi jurnal 1 hari dalam seminggu.
+                            @else
+                                Pelindung streak telah terpakai minggu ini dan akan diperbarui otomatis minggu depan.
+                            @endif
+                        </p>
+                    </div>
+                </div>
+
+                {{-- 3. Web Push Notification Toggle --}}
+                <div class="p-3.5 rounded-2xl bg-surface border border-ink-200 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-xl">📲</span>
+                        <div>
+                            <h4 class="font-bold text-xs text-ink-900">Notifikasi Peramban (Jam 20:00)</h4>
+                            <p class="text-[11px] text-ink-500 font-semibold" x-text="hasNotifPermission ? 'Notifikasi peramban aktif untuk mengingatkanmu' : 'Aktifkan agar muncul pop-up pengingat di layar HP/Laptop'"></p>
+                        </div>
+                    </div>
+
+                    <button type="button"
+                            @click="requestNotif"
+                            class="btn text-xs font-bold py-1.5 px-3 rounded-xl"
+                            :class="hasNotifPermission ? 'bg-mint-soft text-mint font-extrabold cursor-default' : 'btn-primary'">
+                        <span x-text="hasNotifPermission ? '✓ Aktif' : 'Aktifkan'"></span>
+                    </button>
                 </div>
             </div>
 
-            <div class="pt-4 border-t border-ink-100 mt-4">
-                <a href="{{ route('siswa.profile') }}" class="btn-soft w-full text-xs font-bold">
-                    Lihat Koleksi Badge 🎖️
-                </a>
+            <div class="pt-2 text-right">
+                <button type="button" @click="notifModal = false" class="btn-soft text-xs font-bold py-2 px-4 rounded-xl">
+                    Tutup
+                </button>
             </div>
         </div>
     </div>

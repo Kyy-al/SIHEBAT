@@ -13,6 +13,7 @@ class Habit extends Model
         'icon',
         'color',
         'xp_reward',
+        'target_value',
         'order',
         'is_active',
     ];
@@ -45,14 +46,14 @@ class Habit extends Model
     public function getColorHexAttribute(): string
     {
         return match ($this->color) {
-            'bangun'   => '#FFB020',
-            'ibadah'   => '#A78BFA',
+            'bangun' => '#FFB020',
+            'ibadah' => '#A78BFA',
             'olahraga' => '#FF7A59',
-            'makan'    => '#4ADE80',
-            'belajar'  => '#22C7D6',
-            'sosial'   => '#FF8FB1',
-            'tidur'    => '#6366F1',
-            default    => '#38BDF8',
+            'makan' => '#4ADE80',
+            'belajar' => '#22C7D6',
+            'sosial' => '#FF8FB1',
+            'tidur' => '#6366F1',
+            default => '#38BDF8',
         };
     }
 }

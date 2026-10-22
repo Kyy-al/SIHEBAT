@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
@@ -16,19 +17,28 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
+        'gender',
+        'school_id',
         'nis',
+        'nisn',
         'nip',
+        'gol_ruang',
+        'jabatan',
         'email',
         'role',
         'password',
         'avatar',
+        'avatar_warning',
+        'avatar_moderated_at',
         'must_change_password',
+        'initial_password',
         'xp',
         'level',
         'current_streak',
         'longest_streak',
         'last_journal_date',
         'streak_freezes',
+        'streak_freeze_used_at',
     ];
 
     protected $hidden = [
@@ -47,11 +57,13 @@ class User extends Authenticatable
             'password' => 'hashed',
             'must_change_password' => 'boolean',
             'last_journal_date' => 'date',
+            'avatar_moderated_at' => 'datetime',
             'xp' => 'integer',
             'level' => 'integer',
             'current_streak' => 'integer',
             'longest_streak' => 'integer',
             'streak_freezes' => 'integer',
+            'streak_freeze_used_at' => 'datetime',
         ];
     }
 
@@ -72,6 +84,15 @@ class User extends Authenticatable
         return $this->role === 'siswa';
     }
 
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if ($this->avatar && Storage::disk('public')->exists($this->avatar)) {
+            return asset('storage/'.$this->avatar);
+        }
+
+        return null;
+    }
+
     // ----- Relationships -----
 
     public function classrooms(): BelongsToMany
@@ -90,6 +111,21 @@ class User extends Authenticatable
         return $this->hasMany(Journal::class);
     }
 
+    public function school()
+    {
+        return $this->belongsTo(School::class);
+    }
+
+    public function xpLogs(): HasMany
+    {
+        return $this->hasMany(XpLog::class);
+    }
+
+    public function userMissions(): HasMany
+    {
+        return $this->hasMany(UserMission::class);
+    }
+
     public function badges(): BelongsToMany
     {
         return $this->belongsToMany(Badge::class, 'badge_user')
@@ -104,8 +140,8 @@ class User extends Authenticatable
             $this->level >= 20 => 'Legenda',
             $this->level >= 15 => 'Luar Biasa',
             $this->level >= 10 => 'Hebat',
-            $this->level >= 5  => 'Berkembang',
-            default             => 'Pemula',
+            $this->level >= 5 => 'Berkembang',
+            default => 'Pemula',
         };
     }
 
@@ -118,6 +154,7 @@ class User extends Authenticatable
     {
         $xpForCurrentLevel = ($this->level - 1) * 100;
         $xpInLevel = $this->xp - $xpForCurrentLevel;
+
         return (int) min(100, ($xpInLevel / max(1, $this->xp_to_next_level)) * 100);
     }
 

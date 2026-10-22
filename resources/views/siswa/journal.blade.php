@@ -4,17 +4,29 @@
 
 @section('content')
 <div class="max-w-3xl mx-auto px-4 py-4 sm:py-6" id="journal-app">
-    {{-- Top Navigation / Back --}}
-    <div class="flex items-center justify-between mb-4">
-        <a href="{{ route('siswa.dashboard') }}" class="btn-ghost text-sm flex items-center gap-1">
+    {{-- Top Navigation / Back & Date Switcher --}}
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <a href="{{ route('siswa.dashboard') }}" class="btn-ghost text-sm flex items-center gap-1 self-start">
             <svg xmlns="http://www.w3.org/2000/svg" class="size-4" fill="currentColor" viewBox="0 0 256 256">
                 <path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/>
             </svg>
             Kembali ke Beranda
         </a>
-        <span class="text-xs font-bold px-3 py-1 rounded-full bg-primary-100 text-primary-800">
-            {{ $today->locale('id')->isoFormat('dddd, D MMMM Y') }}
-        </span>
+
+        {{-- Date Selection Pills (Hari Ini vs Kemarin H-1) --}}
+        <div class="flex items-center gap-2 self-start sm:self-auto bg-white p-1 rounded-2xl border border-ink-100 shadow-xs">
+            <a href="{{ route('siswa.journal', ['date' => $today->format('Y-m-d')]) }}"
+               class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 {{ $isToday ? 'bg-primary-400 text-ink-900 shadow-sm' : 'text-ink-600 hover:text-ink-900 hover:bg-canvas' }}">
+                <span>☀️</span>
+                <span>Hari Ini ({{ $today->format('d/m') }})</span>
+            </a>
+            <a href="{{ route('siswa.journal', ['date' => $yesterday->format('Y-m-d')]) }}"
+               class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 {{ $isYesterday ? 'bg-primary-400 text-ink-900 shadow-sm' : 'text-ink-600 hover:text-ink-900 hover:bg-canvas' }}"
+               title="Isi mundur maksimal H-1">
+                <span>⏪</span>
+                <span>Kemarin ({{ $yesterday->format('d/m') }})</span>
+            </a>
+        </div>
     </div>
 
     {{-- Header Banner & Live Progress --}}
@@ -42,6 +54,7 @@
     {{-- Journal Form --}}
     <form method="POST" action="{{ route('siswa.journal.save') }}" id="journal-form" class="space-y-4">
         @csrf
+        <input type="hidden" name="date" value="{{ $targetDate->format('Y-m-d') }}">
 
         @foreach($habits as $index => $habit)
             @php
@@ -64,17 +77,8 @@
             <div class="card p-5 border border-ink-100 transition-all hover:shadow-md habit-card" data-slug="{{ $habit->slug }}" data-id="{{ $habit->id }}">
                 <div class="flex items-start justify-between gap-3 mb-4">
                     <div class="flex items-center gap-3">
-                        <div class="size-12 rounded-2xl {{ $bgClass }} flex items-center justify-center text-2xl shadow-sm">
-                            @switch($habit->slug)
-                                @case('bangun-pagi') 🌅 @break
-                                @case('beribadah') 🤲 @break
-                                @case('berolahraga') 🏃 @break
-                                @case('makan-sehat') 🥗 @break
-                                @case('gemar-belajar') 📚 @break
-                                @case('bermasyarakat') 🤝 @break
-                                @case('tidur-cepat') 🌙 @break
-                                @default ⭐
-                            @endswitch
+                        <div class="size-12 rounded-2xl {{ $bgClass }} flex items-center justify-center p-1 shadow-sm">
+                            <x-mascot-habit :habit="$habit->slug" size="sm" />
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
@@ -98,27 +102,49 @@
                     @switch($habit->slug)
                         {{-- 1. BANGUN PAGI --}}
                         @case('bangun-pagi')
-                            @php $savedTime = $val['time'] ?? ''; @endphp
+                            @php
+                                $savedTime = $val['time'] ?? '';
+                                $isLate = !empty($val['is_late']) || ($savedTime && $savedTime > '06:00');
+                            @endphp
                             <div>
                                 <label class="input-label">Pukul berapa kamu bangun pagi ini?</label>
                                 <div class="flex flex-wrap gap-2 mb-3">
                                     @foreach(['04:30', '05:00', '05:30', '06:00'] as $preset)
                                         <button type="button"
                                                 class="chip-btn py-2 px-4 rounded-xl border border-ink-300 bg-white font-bold text-sm text-ink-700 transition hover:bg-primary-50 active:scale-95"
-                                                onclick="setPreset('{{ $prefix }}_time', '{{ $preset }}')">
+                                                onclick="setPreset('{{ $prefix }}_time', '{{ $preset }}'); document.getElementById('{{ $prefix }}_is_late').checked = false;">
                                             {{ $preset }}
                                         </button>
                                     @endforeach
+                                    <button type="button"
+                                            class="chip-btn py-2 px-4 rounded-xl border border-rose-300 bg-rose-50 font-bold text-sm text-rose-800 transition hover:bg-rose-100 active:scale-95 flex items-center gap-1.5"
+                                            onclick="setKesiangan('{{ $prefix }}')">
+                                        <span>😴</span>
+                                        <span>Kesiangan (> 06:00)</span>
+                                    </button>
                                 </div>
-                                <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-3 flex-wrap">
                                     <input type="time"
                                            id="{{ $prefix }}_time"
                                            name="{{ $prefix }}_time"
                                            value="{{ $savedTime }}"
                                            class="input max-w-[200px] habit-input"
                                            onchange="updateProgress()">
-                                    <span class="text-xs text-ink-500 font-semibold">Tercapai jika ≤ 05.00</span>
+                                    <span class="text-xs text-ink-500 font-semibold">Tercapai tepat waktu jika ≤ 05.30</span>
                                 </div>
+
+                                <label class="flex items-center gap-2.5 mt-3 p-2.5 rounded-xl bg-amber-50/80 border border-amber-200/80 cursor-pointer max-w-md">
+                                    <input type="checkbox"
+                                           id="{{ $prefix }}_is_late"
+                                           name="{{ $prefix }}_is_late"
+                                           value="1"
+                                           {{ $isLate ? 'checked' : '' }}
+                                           onchange="toggleLateCheckbox('{{ $prefix }}')"
+                                           class="rounded text-amber-600 focus:ring-amber-500">
+                                    <span class="text-xs font-bold text-amber-950">
+                                        Saya bangun kesiangan hari ini (jujur mencatat untuk evaluasi diri)
+                                    </span>
+                                </label>
                             </div>
                             @break
 
@@ -126,9 +152,11 @@
                         @case('beribadah')
                             @php
                                 $done = $val['done'] ?? false;
-                                $savedTypes = $val['types'] ?? [];
+                                $savedTypes = (array)($val['types'] ?? []);
+                                $savedCustom = $val['custom'] ?? '';
+                                $savedFaith = $val['faith'] ?? 'islam';
                             @endphp
-                            <div class="space-y-3">
+                            <div class="space-y-3" x-data="{ faithTab: '{{ $savedFaith }}' }">
                                 <label class="flex items-center gap-3 cursor-pointer">
                                     <input type="checkbox"
                                            id="{{ $prefix }}_done"
@@ -138,22 +166,100 @@
                                            {{ $done ? 'checked' : '' }}
                                            onchange="updateProgress()">
                                     <div class="w-12 h-7 bg-ink-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-mint relative"></div>
-                                    <span class="font-bold text-ink-900 text-sm">Sudah melaksanakan ibadah hari ini</span>
+                                    <span class="font-bold text-ink-900 text-sm">Sudah melaksanakan ibadah / doa hari ini</span>
                                 </label>
 
                                 <div class="border-t border-ink-100 pt-3">
-                                    <span class="text-xs font-bold text-ink-700 block mb-2">Jenis / Waktu Ibadah (pilihan inklusif):</span>
-                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                        @foreach(['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya', 'Doa / Ibadah Lain'] as $ib)
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-xs font-bold text-ink-700">Pilih Agama / Bentuk Ibadah:</span>
+                                    </div>
+
+                                    {{-- Agama Tab Selector --}}
+                                    <div class="flex items-center gap-1.5 flex-wrap mb-3">
+                                        <button type="button" @click="faithTab = 'islam'" :class="faithTab === 'islam' ? 'bg-primary-500 text-white font-black' : 'bg-canvas text-ink-700 border border-ink-200'" class="px-2.5 py-1 rounded-xl text-xs font-bold transition">
+                                            🕌 Islam
+                                        </button>
+                                        <button type="button" @click="faithTab = 'kristen'" :class="faithTab === 'kristen' ? 'bg-primary-500 text-white font-black' : 'bg-canvas text-ink-700 border border-ink-200'" class="px-2.5 py-1 rounded-xl text-xs font-bold transition">
+                                            ✝️ Kristen & Katolik
+                                        </button>
+                                        <button type="button" @click="faithTab = 'hindu'" :class="faithTab === 'hindu' ? 'bg-primary-500 text-white font-black' : 'bg-canvas text-ink-700 border border-ink-200'" class="px-2.5 py-1 rounded-xl text-xs font-bold transition">
+                                            🕉️ Hindu
+                                        </button>
+                                        <button type="button" @click="faithTab = 'buddha'" :class="faithTab === 'buddha' ? 'bg-primary-500 text-white font-black' : 'bg-canvas text-ink-700 border border-ink-200'" class="px-2.5 py-1 rounded-xl text-xs font-bold transition">
+                                            ☸️ Buddha / Konghucu / Lainnya
+                                        </button>
+                                    </div>
+                                    <input type="hidden" name="{{ $prefix }}_faith" :value="faithTab">
+
+                                    {{-- Islam Items --}}
+                                    <div x-show="faithTab === 'islam'" class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                        @foreach(['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya', 'Tadarus / Mengaji'] as $ib)
                                             <label class="flex items-center gap-2 p-2.5 rounded-xl border border-ink-100 bg-white hover:bg-canvas cursor-pointer text-xs font-semibold text-ink-700">
                                                 <input type="checkbox"
                                                        name="{{ $prefix }}_types[]"
                                                        value="{{ $ib }}"
                                                        {{ in_array($ib, $savedTypes) ? 'checked' : '' }}
-                                                       class="rounded text-primary-500 focus:ring-primary-400">
+                                                       onchange="onPrayerChecked('{{ $prefix }}')"
+                                                       class="worship-checkbox rounded text-primary-500 focus:ring-primary-400">
                                                 <span>{{ $ib }}</span>
                                             </label>
                                         @endforeach
+                                    </div>
+
+                                    {{-- Kristen / Katolik Items --}}
+                                    <div x-show="faithTab === 'kristen'" class="grid grid-cols-2 sm:grid-cols-3 gap-2" style="display: none;">
+                                        @foreach(['Doa Pagi', 'Doa Malam', 'Saat Teduh / Alkitab', 'Kebaktian / Ibadah Gereja', 'Doa Rosario / Misa', 'Ibadah Pemuda / Remaja'] as $ib)
+                                            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-ink-100 bg-white hover:bg-canvas cursor-pointer text-xs font-semibold text-ink-700">
+                                                <input type="checkbox"
+                                                       name="{{ $prefix }}_types[]"
+                                                       value="{{ $ib }}"
+                                                       {{ in_array($ib, $savedTypes) ? 'checked' : '' }}
+                                                       onchange="onPrayerChecked('{{ $prefix }}')"
+                                                       class="worship-checkbox rounded text-primary-500 focus:ring-primary-400">
+                                                <span>{{ $ib }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+
+                                    {{-- Hindu Items --}}
+                                    <div x-show="faithTab === 'hindu'" class="grid grid-cols-2 sm:grid-cols-3 gap-2" style="display: none;">
+                                        @foreach(['Tri Sandhya Pagi', 'Tri Sandhya Siang', 'Tri Sandhya Sore', 'Panca Sembahyang', 'Membaca Kitab Suci'] as $ib)
+                                            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-ink-100 bg-white hover:bg-canvas cursor-pointer text-xs font-semibold text-ink-700">
+                                                <input type="checkbox"
+                                                       name="{{ $prefix }}_types[]"
+                                                       value="{{ $ib }}"
+                                                       {{ in_array($ib, $savedTypes) ? 'checked' : '' }}
+                                                       onchange="onPrayerChecked('{{ $prefix }}')"
+                                                       class="worship-checkbox rounded text-primary-500 focus:ring-primary-400">
+                                                <span>{{ $ib }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+
+                                    {{-- Buddha / Konghucu / Lainnya --}}
+                                    <div x-show="faithTab === 'buddha'" class="grid grid-cols-2 sm:grid-cols-3 gap-2" style="display: none;">
+                                        @foreach(['Puja Bakti Pagi/Malam', 'Meditasi / Samadhi', 'Membaca Paritta', 'Sembahyang Tian / Leluhur', 'Doa Kebajikan Mandiri'] as $ib)
+                                            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-ink-100 bg-white hover:bg-canvas cursor-pointer text-xs font-semibold text-ink-700">
+                                                <input type="checkbox"
+                                                       name="{{ $prefix }}_types[]"
+                                                       value="{{ $ib }}"
+                                                       {{ in_array($ib, $savedTypes) ? 'checked' : '' }}
+                                                       onchange="onPrayerChecked('{{ $prefix }}')"
+                                                       class="worship-checkbox rounded text-primary-500 focus:ring-primary-400">
+                                                <span>{{ $ib }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+
+                                    {{-- Custom / Other Prayer Input --}}
+                                    <div class="mt-2.5">
+                                        <input type="text"
+                                               name="{{ $prefix }}_custom"
+                                               id="{{ $prefix }}_custom"
+                                               value="{{ $savedCustom }}"
+                                               placeholder="Tuliskan nama atau bentuk ibadah lainnya (opsional)..."
+                                               class="input text-xs"
+                                               oninput="updateProgress()">
                                     </div>
                                 </div>
                             </div>
@@ -276,9 +382,12 @@
 
                         {{-- 6. BERMASYARAKAT --}}
                         @case('bermasyarakat')
-                            @php $savedActivities = $val['activities'] ?? []; @endphp
+                            @php
+                                $savedActivities = (array)($val['activities'] ?? []);
+                                $savedOther = $val['other_activity'] ?? '';
+                            @endphp
                             <div>
-                                <label class="input-label mb-2">Kegiatan Sosial / Gotong Royong Hari Ini (pilih min. 1):</label>
+                                <label class="input-label mb-2">Kegiatan Sosial / Gotong Royong Hari Ini (pilih min. 1 atau tulis kegiatan lain):</label>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     @php
                                         $socialActivities = [
@@ -301,6 +410,20 @@
                                             <span class="text-xs sm:text-sm font-semibold text-ink-900">{{ $label }}</span>
                                         </label>
                                     @endforeach
+                                </div>
+
+                                {{-- Opsi Kegiatan Lainnya --}}
+                                <div class="mt-3 p-3 rounded-2xl bg-canvas border border-ink-100">
+                                    <label class="text-xs font-bold text-ink-800 block mb-1">
+                                        💡 Ada kegiatan sosial / bermasyarakat lainnya yang kamu kerjakan?
+                                    </label>
+                                    <input type="text"
+                                           name="{{ $prefix }}_other_activity"
+                                           id="{{ $prefix }}_other_activity"
+                                           value="{{ $savedOther }}"
+                                           placeholder="Tuliskan di sini (contoh: Kerja bakti RT, menjenguk warga sakit, membantu posyandu, dll.)"
+                                           class="input text-xs"
+                                           oninput="updateProgress()">
                                 </div>
                             </div>
                             @break
@@ -426,6 +549,29 @@
         }
     }
 
+    function setKesiangan(prefix) {
+        const timeInput = document.getElementById(prefix + '_time');
+        const lateCb = document.getElementById(prefix + '_is_late');
+        if (timeInput) timeInput.value = '06:30';
+        if (lateCb) lateCb.checked = true;
+        updateProgress();
+    }
+
+    function toggleLateCheckbox(prefix) {
+        const timeInput = document.getElementById(prefix + '_time');
+        const lateCb = document.getElementById(prefix + '_is_late');
+        if (lateCb && lateCb.checked && (!timeInput.value || timeInput.value < '06:00')) {
+            timeInput.value = '06:30';
+        }
+        updateProgress();
+    }
+
+    function onPrayerChecked(prefix) {
+        const doneCb = document.getElementById(prefix + '_done');
+        if (doneCb) doneCb.checked = true;
+        updateProgress();
+    }
+
     function selectSport(inputId, sportName, btn) {
         const input = document.getElementById(inputId);
         if (input) {
@@ -451,10 +597,13 @@
 
             if (slug === 'bangun-pagi') {
                 const val = document.getElementById(prefix + '_time')?.value;
-                if (val && val.trim() !== '') isComplete = true;
+                const isLate = document.getElementById(prefix + '_is_late')?.checked;
+                if ((val && val.trim() !== '') || isLate) isComplete = true;
             } else if (slug === 'beribadah') {
                 const cb = document.getElementById(prefix + '_done');
-                if (cb && cb.checked) isComplete = true;
+                const anyWorship = card.querySelectorAll('.worship-checkbox:checked').length > 0;
+                const customPrayer = document.getElementById(prefix + '_custom')?.value?.trim();
+                if ((cb && cb.checked) || anyWorship || (customPrayer && customPrayer !== '')) isComplete = true;
             } else if (slug === 'berolahraga') {
                 const sport = document.getElementById(prefix + '_type')?.value;
                 const dur = parseInt(document.getElementById(prefix + '_duration')?.value || '0');
@@ -467,7 +616,8 @@
                 if (dur > 0) isComplete = true;
             } else if (slug === 'bermasyarakat') {
                 const checked = card.querySelectorAll('.social-checkbox:checked').length;
-                if (checked >= 1) isComplete = true;
+                const otherAct = document.getElementById(prefix + '_other_activity')?.value?.trim();
+                if (checked >= 1 || (otherAct && otherAct !== '')) isComplete = true;
             } else if (slug === 'tidur-cepat') {
                 const val = document.getElementById(prefix + '_time')?.value;
                 if (val && val.trim() !== '') isComplete = true;

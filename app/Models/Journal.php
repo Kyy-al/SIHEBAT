@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -13,6 +14,7 @@ class Journal extends Model
         'date',
         'habits_completed',
         'is_perfect_day',
+        'is_draft',
         'xp_earned',
         'mood',
         'notes',
@@ -24,8 +26,16 @@ class Journal extends Model
             'date' => 'date',
             'habits_completed' => 'integer',
             'is_perfect_day' => 'boolean',
+            'is_draft' => 'boolean',
             'xp_earned' => 'integer',
         ];
+    }
+
+    public function setDateAttribute($value): void
+    {
+        $this->attributes['date'] = $value instanceof CarbonInterface
+            ? $value->format('Y-m-d')
+            : (is_string($value) ? substr($value, 0, 10) : $value);
     }
 
     public function user(): BelongsTo
@@ -53,11 +63,11 @@ class Journal extends Model
     {
         return match ($this->mood) {
             'sangat_senang' => '😄',
-            'senang'        => '😊',
-            'biasa'         => '😐',
-            'sedih'         => '😢',
-            'sangat_sedih'  => '😭',
-            default         => '😐',
+            'senang' => '😊',
+            'biasa' => '😐',
+            'sedih' => '😢',
+            'sangat_sedih' => '😭',
+            default => '😐',
         };
     }
 }
