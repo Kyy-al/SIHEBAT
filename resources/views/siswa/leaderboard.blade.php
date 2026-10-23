@@ -3,7 +3,7 @@
 @section('title', 'Peringkat & Klasemen — SiHebat')
 
 @section('content')
-<div class="max-w-4xl mx-auto px-4 py-4 sm:py-6 space-y-6">
+<div class="max-w-4xl mx-auto px-3.5 sm:px-4 py-4 sm:py-6 space-y-6 w-full max-w-full overflow-x-hidden">
 
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -29,14 +29,14 @@
     </div>
 
     {{-- Tabs (Peringkat Kelas vs Peringkat Antar-Kelas) --}}
-    <div class="flex items-center gap-2 border-b border-ink-200">
+    <div class="flex items-center gap-2 border-b border-ink-200 overflow-x-auto scrollbar-none pb-0.5">
         <a href="{{ route('siswa.leaderboard', ['tab' => 'kelas', 'period' => $period]) }}"
-           class="py-2.5 px-4 font-black text-sm border-b-2 transition flex items-center gap-2 {{ $tab === 'kelas' ? 'border-primary-500 text-primary-900' : 'border-transparent text-ink-500 hover:text-ink-900' }}">
+           class="py-2.5 px-3 sm:px-4 font-black text-xs sm:text-sm border-b-2 transition flex items-center gap-2 shrink-0 {{ $tab === 'kelas' ? 'border-primary-500 text-primary-900' : 'border-transparent text-ink-500 hover:text-ink-900' }}">
             <span>👦</span>
             <span>Peringkat Kelas ({{ $classroom ? $classroom->name : 'Kelasmu' }})</span>
         </a>
         <a href="{{ route('siswa.leaderboard', ['tab' => 'antar_kelas', 'period' => $period]) }}"
-           class="py-2.5 px-4 font-black text-sm border-b-2 transition flex items-center gap-2 {{ $tab === 'antar_kelas' ? 'border-primary-500 text-primary-900' : 'border-transparent text-ink-500 hover:text-ink-900' }}">
+           class="py-2.5 px-3 sm:px-4 font-black text-xs sm:text-sm border-b-2 transition flex items-center gap-2 shrink-0 {{ $tab === 'antar_kelas' ? 'border-primary-500 text-primary-900' : 'border-transparent text-ink-500 hover:text-ink-900' }}">
             <span>🏫</span>
             <span>Peringkat Antar-Kelas (% Adil)</span>
         </a>
@@ -78,145 +78,131 @@
                 $third = $students[2];
             @endphp
 
-            <div class="card p-5 sm:p-6 border border-slate-200 bg-gradient-to-b from-slate-100/90 via-slate-50 to-amber-50/20 shadow-card">
-                <div class="text-center mb-5">
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-100 text-primary-900 text-[11px] font-black uppercase tracking-wider">
-                        Top 3 Siswa Terhebat Kelas
+            <div class="card p-3.5 sm:p-5 border border-amber-200/80 bg-gradient-to-b from-amber-50/60 via-white to-primary-50/20 shadow-card overflow-hidden">
+                <div class="text-center mb-3">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary-100 text-primary-900 text-[10px] font-black uppercase tracking-wider">
+                        Top 3 Siswa Terhebat Kelas 🏆
                     </span>
-                    <h3 class="text-base sm:text-lg font-black text-ink-900 mt-1">Podium Prestasi Kelas</h3>
-                    <p class="text-xs text-ink-500 font-semibold mt-0.5">Penghargaan konsistensi pembiasaan karakter di kelasmu.</p>
+                    <h3 class="text-sm sm:text-base font-black text-ink-900 mt-1">Podium Prestasi Kelas</h3>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 items-end max-w-2xl mx-auto text-center pt-2">
-                    {{-- Rank 2 (Silver) --}}
-                    <div class="rounded-2xl border border-slate-300 bg-gradient-to-b from-slate-200/90 via-slate-100/90 to-slate-200/60 p-3.5 sm:p-4 shadow-sm relative overflow-hidden transition-all hover:-translate-y-0.5">
-                        <div class="w-full h-1.5 bg-gradient-to-r from-slate-300 via-slate-400 to-slate-300 absolute top-0 inset-x-0"></div>
-                        <span class="text-[10px] font-black text-slate-900 bg-slate-300/90 border border-slate-400/60 px-2.5 py-0.5 rounded-full inline-block uppercase tracking-wider">
+                {{-- Horizontal 3-Column Podium (Always side-by-side: 2 - 1 - 3, compact & neat) --}}
+                <div class="grid grid-cols-3 gap-1.5 sm:gap-3 items-end max-w-md sm:max-w-lg mx-auto text-center pt-2">
+                    
+                    {{-- 2nd Place (Silver - Left) --}}
+                    <div class="flex flex-col items-center min-w-0">
+                        <span class="text-[9px] sm:text-[10px] font-black text-slate-800 bg-slate-200/90 border border-slate-300 px-1.5 sm:px-2 py-0.5 rounded-full inline-block uppercase tracking-wider mb-1">
                             #2 Perak
                         </span>
 
-                        <div class="relative inline-block my-2">
-                            <div class="avatar size-14 text-sm font-black border-2 border-slate-400 mx-auto bg-gradient-to-br from-slate-200 to-slate-300 text-slate-800 shadow-sm ring-2 ring-slate-200 overflow-hidden">
+                        <div class="relative inline-block my-1">
+                            <div class="avatar size-10 sm:size-13 text-xs sm:text-sm font-black border-2 border-slate-300 mx-auto bg-slate-200 text-slate-800 shadow-xs ring-2 ring-slate-100 overflow-hidden">
                                 @if($second->avatar_url)
                                     <img src="{{ $second->avatar_url }}" alt="{{ $second->name }}" class="w-full h-full object-cover">
                                 @else
                                     {{ substr($second->name, 0, 1) }}
                                 @endif
                             </div>
-                            <span class="absolute -bottom-1 -right-1 size-5 rounded-full bg-slate-700 border-2 border-white text-white font-black text-[10px] flex items-center justify-center shadow-xs">
+                            <span class="absolute -bottom-1 -right-1 size-4 sm:size-5 rounded-full bg-slate-600 border border-white text-white font-black text-[9px] sm:text-[10px] flex items-center justify-center">
                                 2
                             </span>
                         </div>
 
-                        <p class="text-xs font-black text-ink-900 truncate px-1" title="{{ $second->name }}">
+                        <p class="text-[11px] sm:text-xs font-black text-ink-900 truncate w-full px-0.5" title="{{ $second->name }}">
                             {{ $second->name }}
                         </p>
-                        <span class="text-[10px] font-bold text-slate-700 bg-white/80 border border-slate-200 px-2 py-0.5 rounded-full inline-block mt-0.5">
-                            Level {{ $second->level ?? 1 }}
+                        <span class="text-[9px] font-bold text-slate-600">
+                            Lvl {{ $second->level ?? 1 }}
                         </span>
 
-                        <div class="grid grid-cols-2 gap-1.5 mt-2.5 pt-2 border-t border-slate-300/60 text-left">
-                            <div class="bg-white/85 rounded-lg p-1.5 border border-slate-200 text-center">
-                                <span class="text-[8px] font-black uppercase text-slate-600 block">Streak</span>
-                                <span class="text-xs font-black text-slate-900 tabular-nums">{{ $second->current_streak }}h</span>
-                            </div>
-                            <div class="bg-white/85 rounded-lg p-1.5 border border-slate-200 text-center">
-                                <span class="text-[8px] font-black uppercase text-slate-600 block">Total XP</span>
-                                <span class="text-xs font-black text-slate-900 tabular-nums">{{ number_format($second->xp) }}</span>
-                            </div>
-                        </div>
-
-                        <div class="mt-2.5 py-1 rounded-lg bg-slate-300/90 text-slate-800 font-extrabold text-[10px] uppercase tracking-wider border border-slate-400/40">
-                            Peringkat 2
+                        {{-- Pedestal Step --}}
+                        <div class="w-full mt-1.5 pt-2 pb-2 px-1 rounded-t-2xl bg-gradient-to-b from-slate-200 via-slate-100 to-slate-200/70 border-t-2 border-x-2 border-slate-300 shadow-xs flex flex-col items-center justify-center h-20 sm:h-24">
+                            <span class="text-base sm:text-xl font-black text-slate-700 leading-none">2</span>
+                            <span class="text-[10px] sm:text-xs font-black text-slate-900 tabular-nums mt-1 leading-tight">
+                                {{ number_format($second->xp) }} <span class="text-[8px] sm:text-[9px] text-slate-600 font-bold">XP</span>
+                            </span>
+                            <span class="text-[9px] sm:text-[10px] font-extrabold text-orange-600 tabular-nums mt-0.5 leading-tight">
+                                🔥 {{ $second->current_streak }}h
+                            </span>
                         </div>
                     </div>
 
-                    {{-- Rank 1 (Gold - Center & Elevated) --}}
-                    <div class="rounded-2xl border-2 border-amber-400 bg-gradient-to-b from-amber-100/90 via-amber-50/90 to-amber-100/60 p-4 sm:p-5 shadow-lg shadow-amber-500/15 relative overflow-hidden sm:-mt-4 z-10 transition-all hover:-translate-y-1">
-                        <div class="w-full h-2 bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 absolute top-0 inset-x-0"></div>
-                        <span class="text-[10px] font-black text-amber-950 bg-amber-400 px-3 py-1 rounded-full inline-flex items-center gap-1 uppercase tracking-wider shadow-xs">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="size-3" fill="currentColor" viewBox="0 0 256 256"><path d="M232,64H208V48a8,8,0,0,0-8-8H56a8,8,0,0,0-8,8V64H24A16,16,0,0,0,8,80v32a56.06,56.06,0,0,0,56,56h1.77A64.1,64.1,0,0,0,120,211.82V232H88a8,8,0,0,0,0,16h80a8,8,0,0,0,0-16H136V211.82A64.1,64.1,0,0,0,190.23,168H192a56.06,56.06,0,0,0,56-56V80A16,16,0,0,0,232,64ZM40,112V80H48v56a63.84,63.84,0,0,0,1,11.11A40.34,40.34,0,0,1,40,112ZM192,160a48,48,0,0,1-96,0V56H192Zm24-48a40.34,40.34,0,0,1-9,35.11,63.84,63.84,0,0,0,1-11.11V80h8Z"/></svg>
-                            #1 Emas
+                    {{-- 1st Place (Gold - Center & Elevated) --}}
+                    <div class="flex flex-col items-center min-w-0 -mt-2">
+                        <span class="text-[9px] sm:text-[10px] font-black text-amber-950 bg-amber-400 border border-amber-500/50 px-2 sm:px-2.5 py-0.5 rounded-full inline-flex items-center gap-0.5 uppercase tracking-wider mb-1 shadow-xs animate-pop">
+                            👑 #1 Emas
                         </span>
 
-                        <div class="relative inline-block my-2">
-                            <div class="avatar size-16 text-base font-black border-2 border-amber-400 mx-auto bg-gradient-to-br from-amber-200 to-amber-300 text-amber-950 shadow-md ring-4 ring-amber-300/60 overflow-hidden">
+                        <div class="relative inline-block my-1">
+                            <div class="avatar size-13 sm:size-16 text-sm sm:text-base font-black border-2 border-amber-400 mx-auto bg-amber-200 text-amber-950 shadow-md ring-3 sm:ring-4 ring-amber-300/70 overflow-hidden">
                                 @if($first->avatar_url)
                                     <img src="{{ $first->avatar_url }}" alt="{{ $first->name }}" class="w-full h-full object-cover">
                                 @else
                                     {{ substr($first->name, 0, 1) }}
                                 @endif
                             </div>
-                            <span class="absolute -bottom-1 -right-1 size-6 rounded-full bg-amber-500 border-2 border-white text-white font-black text-xs flex items-center justify-center shadow-xs">
+                            <span class="absolute -bottom-1 -right-1 size-5 sm:size-6 rounded-full bg-amber-500 border-2 border-white text-white font-black text-[10px] sm:text-xs flex items-center justify-center shadow-xs">
                                 1
                             </span>
                         </div>
 
-                        <p class="text-xs sm:text-sm font-black text-ink-900 truncate px-1" title="{{ $first->name }}">
+                        <p class="text-[11px] sm:text-xs font-black text-ink-900 truncate w-full px-0.5" title="{{ $first->name }}">
                             {{ $first->name }}
                         </p>
-                        <span class="text-[10px] font-black text-amber-950 bg-amber-200/90 border border-amber-300 px-2.5 py-0.5 rounded-full inline-block mt-0.5">
-                            Level {{ $first->level ?? 1 }} · Bintang Kelas
+                        <span class="text-[9px] font-black text-amber-950 bg-amber-200/80 px-1.5 py-0.2 rounded-md">
+                            Lvl {{ $first->level ?? 1 }}
                         </span>
 
-                        <div class="grid grid-cols-2 gap-1.5 mt-3 pt-2.5 border-t border-amber-300/60 text-left">
-                            <div class="bg-white/85 rounded-lg p-2 border border-amber-200 text-center">
-                                <span class="text-[8px] font-black uppercase text-amber-800 block">Streak</span>
-                                <span class="text-sm font-black text-amber-950 tabular-nums">{{ $first->current_streak }}h</span>
-                            </div>
-                            <div class="bg-white/85 rounded-lg p-2 border border-amber-200 text-center">
-                                <span class="text-[8px] font-black uppercase text-amber-800 block">Total XP</span>
-                                <span class="text-sm font-black text-amber-950 tabular-nums">{{ number_format($first->xp) }}</span>
-                            </div>
-                        </div>
-
-                        <div class="mt-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-amber-950 font-black text-xs uppercase tracking-wider border border-amber-400 shadow-xs">
-                            Juara Kelas Teratas
+                        {{-- Pedestal Step --}}
+                        <div class="w-full mt-1.5 pt-2 pb-2.5 px-1 rounded-t-2xl bg-gradient-to-b from-amber-300 via-amber-200 to-amber-300/80 border-t-2 border-x-2 border-amber-400 shadow-md flex flex-col items-center justify-center h-28 sm:h-32">
+                            <span class="text-xl sm:text-2xl font-black text-amber-950 leading-none">1</span>
+                            <span class="text-[11px] sm:text-sm font-black text-amber-950 tabular-nums mt-1 leading-tight">
+                                {{ number_format($first->xp) }} <span class="text-[9px] sm:text-[10px] text-amber-800 font-bold">XP</span>
+                            </span>
+                            <span class="text-[10px] sm:text-xs font-black text-orange-600 tabular-nums mt-0.5 leading-tight">
+                                🔥 {{ $first->current_streak }}h
+                            </span>
                         </div>
                     </div>
 
-                    {{-- Rank 3 (Bronze) --}}
-                    <div class="rounded-2xl border border-amber-600/40 bg-gradient-to-b from-orange-100/90 via-amber-100/60 to-orange-100/50 p-3.5 sm:p-4 shadow-sm relative overflow-hidden transition-all hover:-translate-y-0.5">
-                        <div class="w-full h-1.5 bg-gradient-to-r from-amber-600/40 via-amber-700/60 to-amber-600/40 absolute top-0 inset-x-0"></div>
-                        <span class="text-[10px] font-black text-amber-950 bg-amber-200/90 border border-amber-400 px-2.5 py-0.5 rounded-full inline-block uppercase tracking-wider">
+                    {{-- 3rd Place (Bronze - Right) --}}
+                    <div class="flex flex-col items-center min-w-0">
+                        <span class="text-[9px] sm:text-[10px] font-black text-amber-950 bg-amber-200/90 border border-amber-400 px-1.5 sm:px-2 py-0.5 rounded-full inline-block uppercase tracking-wider mb-1">
                             #3 Perunggu
                         </span>
 
-                        <div class="relative inline-block my-2">
-                            <div class="avatar size-14 text-sm font-black border-2 border-amber-600/40 mx-auto bg-gradient-to-br from-amber-200/90 to-orange-200 text-amber-950 shadow-sm ring-2 ring-orange-200/60 overflow-hidden">
+                        <div class="relative inline-block my-1">
+                            <div class="avatar size-10 sm:size-13 text-xs sm:text-sm font-black border-2 border-amber-600/40 mx-auto bg-orange-100 text-amber-950 shadow-xs ring-2 ring-orange-100 overflow-hidden">
                                 @if($third->avatar_url)
                                     <img src="{{ $third->avatar_url }}" alt="{{ $third->name }}" class="w-full h-full object-cover">
                                 @else
                                     {{ substr($third->name, 0, 1) }}
                                 @endif
                             </div>
-                            <span class="absolute -bottom-1 -right-1 size-5 rounded-full bg-amber-800 border-2 border-white text-white font-black text-[10px] flex items-center justify-center shadow-xs">
+                            <span class="absolute -bottom-1 -right-1 size-4 sm:size-5 rounded-full bg-amber-800 border border-white text-white font-black text-[9px] sm:text-[10px] flex items-center justify-center">
                                 3
                             </span>
                         </div>
 
-                        <p class="text-xs font-black text-ink-900 truncate px-1" title="{{ $third->name }}">
+                        <p class="text-[11px] sm:text-xs font-black text-ink-900 truncate w-full px-0.5" title="{{ $third->name }}">
                             {{ $third->name }}
                         </p>
-                        <span class="text-[10px] font-bold text-amber-900 bg-white/80 border border-amber-200 px-2 py-0.5 rounded-full inline-block mt-0.5">
-                            Level {{ $third->level ?? 1 }}
+                        <span class="text-[9px] font-bold text-amber-900">
+                            Lvl {{ $third->level ?? 1 }}
                         </span>
 
-                        <div class="grid grid-cols-2 gap-1.5 mt-2.5 pt-2 border-t border-amber-300/60 text-left">
-                            <div class="bg-white/85 rounded-lg p-1.5 border border-amber-200 text-center">
-                                <span class="text-[8px] font-black uppercase text-amber-900 block">Streak</span>
-                                <span class="text-xs font-black text-amber-950 tabular-nums">{{ $third->current_streak }}h</span>
-                            </div>
-                            <div class="bg-white/85 rounded-lg p-1.5 border border-amber-200 text-center">
-                                <span class="text-[8px] font-black uppercase text-amber-900 block">Total XP</span>
-                                <span class="text-xs font-black text-amber-950 tabular-nums">{{ number_format($third->xp) }}</span>
-                            </div>
-                        </div>
-
-                        <div class="mt-2.5 py-1 rounded-lg bg-amber-200/90 text-amber-950 font-extrabold text-[10px] uppercase tracking-wider border border-amber-300">
-                            Peringkat 3
+                        {{-- Pedestal Step --}}
+                        <div class="w-full mt-1.5 pt-2 pb-2 px-1 rounded-t-2xl bg-gradient-to-b from-orange-200/80 via-amber-100 to-orange-200/50 border-t-2 border-x-2 border-amber-300 shadow-xs flex flex-col items-center justify-center h-16 sm:h-20">
+                            <span class="text-base sm:text-xl font-black text-amber-900 leading-none">3</span>
+                            <span class="text-[10px] sm:text-xs font-black text-amber-950 tabular-nums mt-1 leading-tight">
+                                {{ number_format($third->xp) }} <span class="text-[8px] sm:text-[9px] text-amber-800 font-bold">XP</span>
+                            </span>
+                            <span class="text-[9px] sm:text-[10px] font-extrabold text-orange-600 tabular-nums mt-0.5 leading-tight">
+                                🔥 {{ $third->current_streak }}h
+                            </span>
                         </div>
                     </div>
+
                 </div>
             </div>
         @endif

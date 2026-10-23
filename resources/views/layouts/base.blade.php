@@ -22,7 +22,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
 </head>
-<body class="min-h-dvh bg-canvas font-sans text-ink-900 antialiased">
+<body class="min-h-dvh bg-canvas font-sans text-ink-900 antialiased w-full max-w-full overflow-x-hidden">
     @yield('body')
 
     {{-- Toast notifications --}}

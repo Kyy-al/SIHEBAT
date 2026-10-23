@@ -3,7 +3,7 @@
 @section('title', 'Beranda Siswa — SiHebat')
 
 @section('content')
-<div class="max-w-4xl mx-auto px-4 py-4 sm:py-6 space-y-5"
+<div class="max-w-4xl mx-auto px-3.5 sm:px-4 py-4 sm:py-6 space-y-5 w-full max-w-full overflow-x-hidden"
      x-data="{
         streakModal: false,
         notifModal: false,
@@ -243,46 +243,48 @@
     @endif
 
     {{-- Weekly Calendar Dot Matrix (Directly inspired by Image 2 middle phone) --}}
-    <div class="card p-4 sm:p-5 border border-ink-100 shadow-card">
+    <div class="card p-4 sm:p-5 border border-ink-100 shadow-card overflow-hidden">
         <div class="flex items-center justify-between mb-3">
             <div>
                 <h3 class="font-extrabold text-ink-900 text-sm sm:text-base">Jejak Kebiasaan Minggu Ini</h3>
                 <p class="text-[11px] text-ink-500 font-semibold">Titik terisi menandakan jurnal harianmu telah tuntas</p>
             </div>
-            <span class="chip bg-primary-100 text-primary-900 text-xs font-black">7 Hari</span>
+            <span class="chip bg-primary-100 text-primary-900 text-xs font-black shrink-0">7 Hari</span>
         </div>
 
-        <div class="grid grid-cols-7 gap-2 text-center pt-1">
-            @foreach($weekDays as $day)
-                <div class="flex flex-col items-center gap-1.5">
-                    <span class="text-[11px] font-extrabold text-ink-500 uppercase">
-                        {{ substr($day['day_name'], 0, 3) }}
-                    </span>
+        <div class="overflow-x-auto scrollbar-none pt-1">
+            <div class="grid grid-cols-7 gap-1 sm:gap-2 text-center min-w-[280px]">
+                @foreach($weekDays as $day)
+                    <div class="flex flex-col items-center gap-1.5">
+                        <span class="text-[11px] font-extrabold text-ink-500 uppercase">
+                            {{ substr($day['day_name'], 0, 3) }}
+                        </span>
 
-                    {{-- Circular date badge like reference Image 2 --}}
-                    @if($day['is_perfect'])
-                        <div class="size-9 rounded-full bg-sun text-ink-900 font-black text-xs flex items-center justify-center shadow-sm {{ $day['is_today'] ? 'ring-4 ring-primary-400 ring-offset-2' : '' }}" title="Hari Sempurna 7/7">
-                            ★
-                        </div>
-                    @elseif($day['completed'] >= 4)
-                        <div class="size-9 rounded-full bg-primary-400 text-ink-900 font-black text-xs flex items-center justify-center shadow-sm {{ $day['is_today'] ? 'ring-4 ring-primary-500 ring-offset-2' : '' }}" title="{{ $day['completed'] }}/7 kebiasaan">
-                            {{ $day['completed'] }}
-                        </div>
-                    @elseif($day['completed'] > 0)
-                        <div class="size-9 rounded-full bg-primary-200 text-primary-900 font-bold text-xs flex items-center justify-center {{ $day['is_today'] ? 'ring-4 ring-primary-400 ring-offset-2' : '' }}" title="{{ $day['completed'] }}/7 kebiasaan">
-                            {{ $day['completed'] }}
-                        </div>
-                    @else
-                        <div class="size-9 rounded-full border-2 border-ink-200 text-ink-400 font-bold text-xs flex items-center justify-center {{ $day['is_today'] ? 'ring-4 ring-primary-400 ring-offset-2 border-primary-400 text-primary-700' : '' }}">
-                            {{ $day['is_future'] ? '·' : '○' }}
-                        </div>
-                    @endif
+                        {{-- Circular date badge like reference Image 2 --}}
+                        @if($day['is_perfect'])
+                            <div class="size-9 rounded-full bg-sun text-ink-900 font-black text-xs flex items-center justify-center shadow-sm {{ $day['is_today'] ? 'ring-4 ring-primary-400 ring-offset-2' : '' }}" title="Hari Sempurna 7/7">
+                                ★
+                            </div>
+                        @elseif($day['completed'] >= 4)
+                            <div class="size-9 rounded-full bg-primary-400 text-ink-900 font-black text-xs flex items-center justify-center shadow-sm {{ $day['is_today'] ? 'ring-4 ring-primary-500 ring-offset-2' : '' }}" title="{{ $day['completed'] }}/7 kebiasaan">
+                                {{ $day['completed'] }}
+                            </div>
+                        @elseif($day['completed'] > 0)
+                            <div class="size-9 rounded-full bg-primary-200 text-primary-900 font-bold text-xs flex items-center justify-center {{ $day['is_today'] ? 'ring-4 ring-primary-400 ring-offset-2' : '' }}" title="{{ $day['completed'] }}/7 kebiasaan">
+                                {{ $day['completed'] }}
+                            </div>
+                        @else
+                            <div class="size-9 rounded-full border-2 border-ink-200 text-ink-400 font-bold text-xs flex items-center justify-center {{ $day['is_today'] ? 'ring-4 ring-primary-400 ring-offset-2 border-primary-400 text-primary-700' : '' }}">
+                                {{ $day['is_future'] ? '·' : '○' }}
+                            </div>
+                        @endif
 
-                    <span class="text-[11px] font-extrabold {{ $day['is_today'] ? 'text-primary-800' : 'text-ink-700' }}">
-                        {{ $day['date']->format('d') }}
-                    </span>
-                </div>
-            @endforeach
+                        <span class="text-[11px] font-extrabold {{ $day['is_today'] ? 'text-primary-800' : 'text-ink-700' }}">
+                            {{ $day['date']->format('d') }}
+                        </span>
+                    </div>
+                @endforeach
+            </div>
         </div>
     </div>
 
@@ -325,7 +327,7 @@
                     };
                 @endphp
 
-                <a href="{{ route('siswa.journal') }}" class="rounded-3xl p-3.5 sm:p-4 {{ $bgClass }} border border-black/5 flex flex-col justify-between hover:scale-[1.02] transition-transform shadow-xs">
+                <a href="{{ route('siswa.journal') }}" class="rounded-3xl p-3.5 sm:p-4 {{ $bgClass }} border border-black/5 flex flex-col justify-between hover:scale-[1.02] transition-transform shadow-xs overflow-hidden">
                     <div class="flex items-start justify-between">
                         <div class="size-11 rounded-2xl bg-white/95 shadow-sm flex items-center justify-center p-1">
                             <x-mascot-habit :habit="$habit->slug" size="sm" />
@@ -354,7 +356,7 @@
             @endforeach
 
             {{-- 8th Card: Perfect Day Bonus --}}
-            <div class="rounded-3xl p-3.5 sm:p-4 bg-sun-soft border border-sun/30 flex flex-col justify-between shadow-xs">
+            <div class="rounded-3xl p-3.5 sm:p-4 bg-sun-soft border border-sun/30 flex flex-col justify-between shadow-xs overflow-hidden">
                 <div class="flex items-start justify-between">
                     <div class="size-11 rounded-2xl bg-white/95 shadow-sm flex items-center justify-center p-1">
                         <x-mascot-habit habit="hari-sempurna" size="sm" />
@@ -438,32 +440,111 @@
     @endif
 
     {{-- Classroom Leaderboard Snippet --}}
-    <div class="card p-4 sm:p-5 border border-ink-100 shadow-card">
-        <div class="flex items-center justify-between mb-3">
+    <div class="card p-4 sm:p-5 border border-ink-100 shadow-card space-y-3.5">
+        <div class="flex items-center justify-between">
             <div>
-                <h3 class="font-extrabold text-ink-900 text-sm sm:text-base">Peringkat Kelas Teratas</h3>
-                <p class="text-xs font-semibold text-ink-500">Semangat menjaga konsistensi bersama teman sekelas</p>
+                <h3 class="font-extrabold text-ink-900 text-sm sm:text-base flex items-center gap-1.5">
+                    <span>🏆</span>
+                    <span>Peringkat Kelas Teratas</span>
+                </h3>
+                <p class="text-xs font-semibold text-ink-500">Semangat konsistensi bersama teman sekelas</p>
             </div>
-            <a href="{{ route('siswa.leaderboard') }}" class="btn-ghost text-xs font-bold">
-                Lihat Semua 🏆
+            <a href="{{ route('siswa.leaderboard') }}" class="btn-ghost text-xs font-bold shrink-0">
+                Lihat Semua ➔
             </a>
         </div>
 
-        <div class="space-y-2">
-            @foreach($leaderboard as $index => $st)
+        @if(count($leaderboard) >= 3)
+            @php
+                $first = $leaderboard[0];
+                $second = $leaderboard[1];
+                $third = $leaderboard[2];
+            @endphp
+            {{-- Compact Horizontal 3-Column Mini Podium (Always side-by-side: 2 - 1 - 3) --}}
+            <div class="p-3 sm:p-4 rounded-3xl bg-gradient-to-b from-amber-50/70 via-white to-primary-50/20 border border-amber-200/70 shadow-2xs">
+                <div class="grid grid-cols-3 gap-1 sm:gap-2.5 items-end max-w-sm mx-auto text-center pt-1">
+                    {{-- 2nd Place (Silver - Left) --}}
+                    <div class="flex flex-col items-center min-w-0">
+                        <span class="text-[8px] sm:text-[9px] font-black text-slate-700 bg-slate-200 px-1.5 py-0.2 rounded-full uppercase">
+                            #2 Perak
+                        </span>
+                        <div class="relative my-1">
+                            <div class="avatar size-9 sm:size-11 text-xs font-black border border-slate-300 mx-auto overflow-hidden bg-slate-100">
+                                @if($second->avatar_url)
+                                    <img src="{{ $second->avatar_url }}" alt="{{ $second->name }}" class="w-full h-full object-cover">
+                                @else
+                                    {{ substr($second->name, 0, 1) }}
+                                @endif
+                            </div>
+                            <span class="absolute -bottom-0.5 -right-0.5 size-3.5 sm:size-4 rounded-full bg-slate-600 text-white font-black text-[8px] flex items-center justify-center">2</span>
+                        </div>
+                        <p class="text-[10px] sm:text-[11px] font-black text-ink-900 truncate w-full px-0.5">{{ $second->name }}</p>
+                        <div class="w-full mt-1 pt-1.5 pb-1 px-0.5 rounded-t-xl bg-gradient-to-b from-slate-200 via-slate-100 to-slate-200/60 border-t border-x border-slate-300 h-14 sm:h-16 flex flex-col items-center justify-center">
+                            <span class="text-xs sm:text-sm font-black text-slate-700">2</span>
+                            <span class="text-[9px] sm:text-[10px] font-black text-slate-900 tabular-nums leading-tight">{{ number_format($second->xp) }} <span class="text-[7px] text-slate-600">XP</span></span>
+                            <span class="text-[8px] sm:text-[9px] font-extrabold text-orange-600 tabular-nums leading-tight">🔥{{ $second->current_streak }}h</span>
+                        </div>
+                    </div>
+
+                    {{-- 1st Place (Gold - Center & Elevated) --}}
+                    <div class="flex flex-col items-center min-w-0 -mt-1.5">
+                        <span class="text-[8px] sm:text-[9px] font-black text-amber-950 bg-amber-400 px-1.5 py-0.2 rounded-full uppercase shadow-xs">
+                            👑 #1 Emas
+                        </span>
+                        <div class="relative my-1">
+                            <div class="avatar size-11 sm:size-13 text-xs sm:text-sm font-black border-2 border-amber-400 mx-auto overflow-hidden bg-amber-100 shadow-sm ring-2 ring-amber-300">
+                                @if($first->avatar_url)
+                                    <img src="{{ $first->avatar_url }}" alt="{{ $first->name }}" class="w-full h-full object-cover">
+                                @else
+                                    {{ substr($first->name, 0, 1) }}
+                                @endif
+                            </div>
+                            <span class="absolute -bottom-0.5 -right-0.5 size-4 sm:size-5 rounded-full bg-amber-500 text-white font-black text-[9px] flex items-center justify-center border border-white">1</span>
+                        </div>
+                        <p class="text-[10px] sm:text-[11px] font-black text-ink-900 truncate w-full px-0.5">{{ $first->name }}</p>
+                        <div class="w-full mt-1 pt-2 pb-1.5 px-0.5 rounded-t-xl bg-gradient-to-b from-amber-300 via-amber-200 to-amber-300/80 border-t-2 border-x-2 border-amber-400 h-20 sm:h-24 flex flex-col items-center justify-center shadow-xs">
+                            <span class="text-sm sm:text-base font-black text-amber-950">1</span>
+                            <span class="text-[10px] sm:text-[11px] font-black text-amber-950 tabular-nums leading-tight">{{ number_format($first->xp) }} <span class="text-[8px] text-amber-800">XP</span></span>
+                            <span class="text-[9px] sm:text-[10px] font-black text-orange-600 tabular-nums leading-tight">🔥{{ $first->current_streak }}h</span>
+                        </div>
+                    </div>
+
+                    {{-- 3rd Place (Bronze - Right) --}}
+                    <div class="flex flex-col items-center min-w-0">
+                        <span class="text-[8px] sm:text-[9px] font-black text-amber-950 bg-amber-200 px-1.5 py-0.2 rounded-full uppercase">
+                            #3 Perunggu
+                        </span>
+                        <div class="relative my-1">
+                            <div class="avatar size-9 sm:size-11 text-xs font-black border border-amber-600/40 mx-auto overflow-hidden bg-orange-50">
+                                @if($third->avatar_url)
+                                    <img src="{{ $third->avatar_url }}" alt="{{ $third->name }}" class="w-full h-full object-cover">
+                                @else
+                                    {{ substr($third->name, 0, 1) }}
+                                @endif
+                            </div>
+                            <span class="absolute -bottom-0.5 -right-0.5 size-3.5 sm:size-4 rounded-full bg-amber-800 text-white font-black text-[8px] flex items-center justify-center">3</span>
+                        </div>
+                        <p class="text-[10px] sm:text-[11px] font-black text-ink-900 truncate w-full px-0.5">{{ $third->name }}</p>
+                        <div class="w-full mt-1 pt-1.5 pb-1 px-0.5 rounded-t-xl bg-gradient-to-b from-orange-200/80 via-amber-100 to-orange-200/50 border-t border-x border-amber-300 h-12 sm:h-14 flex flex-col items-center justify-center">
+                            <span class="text-xs sm:text-sm font-black text-amber-900">3</span>
+                            <span class="text-[9px] sm:text-[10px] font-black text-amber-950 tabular-nums leading-tight">{{ number_format($third->xp) }} <span class="text-[7px] text-amber-800">XP</span></span>
+                            <span class="text-[8px] sm:text-[9px] font-extrabold text-orange-600 tabular-nums leading-tight">🔥{{ $third->current_streak }}h</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        <div class="space-y-1.5">
+            @foreach(collect($leaderboard)->skip(3) as $index => $st)
                 @php
                     $isMe = $st->id === $user->id;
-                    $medal = match($index) {
-                        0 => '🥇',
-                        1 => '🥈',
-                        2 => '🥉',
-                        default => '#' . ($index + 1),
-                    };
+                    $rank = $index + 4;
                 @endphp
                 <div class="flex items-center justify-between p-2.5 rounded-2xl {{ $isMe ? 'bg-primary-100 border border-primary-300' : 'bg-surface hover:bg-canvas' }}">
                     <div class="flex items-center gap-2.5 min-w-0">
-                        <span class="w-6 text-center font-extrabold text-sm tabular-nums text-ink-700">
-                            {{ $medal }}
+                        <span class="w-6 text-center font-extrabold text-xs tabular-nums text-ink-500">
+                            #{{ $rank }}
                         </span>
                         <div class="avatar size-8 text-xs font-black shrink-0 overflow-hidden ring-1 ring-ink-200">
                             @if($st->avatar_url)
@@ -486,8 +567,8 @@
                     </div>
 
                     <div class="text-right shrink-0">
-                        <span class="text-sm font-black text-ink-900 tabular-nums">{{ $st->xp }}</span>
-                        <span class="text-xs font-bold text-amber-600">XP</span>
+                        <span class="text-xs font-black text-ink-900 tabular-nums">{{ $st->xp }}</span>
+                        <span class="text-[10px] font-bold text-amber-600">XP</span>
                     </div>
                 </div>
             @endforeach

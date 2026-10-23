@@ -3,7 +3,7 @@
 @section('title', 'Rapor Kebiasaan Saya — SiHebat')
 
 @section('content')
-<div class="max-w-4xl mx-auto px-4 py-4 sm:py-6 space-y-6">
+<div class="max-w-4xl mx-auto px-3.5 sm:px-4 py-4 sm:py-6 space-y-6 w-full max-w-full overflow-x-hidden">
 
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -36,10 +36,10 @@
     </div>
 
     {{-- Monthly Calendar Heatmap (Directly inspired by Image 2 middle phone!) --}}
-    <div class="card p-5 sm:p-6 border border-ink-100 shadow-card space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-2">
+    <div class="card p-4 sm:p-6 border border-ink-100 shadow-card space-y-4 overflow-hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-                <h3 class="font-extrabold text-ink-900 text-base">
+                <h3 class="font-extrabold text-ink-900 text-sm sm:text-base">
                     Kalender Partisipasi {{ $selectedMonth->locale('id')->isoFormat('MMMM Y') }}
                 </h3>
                 <p class="text-xs text-ink-500 font-semibold">
@@ -48,25 +48,25 @@
             </div>
 
             {{-- Legend --}}
-            <div class="flex items-center gap-2 text-[10px] font-bold text-ink-600 flex-wrap">
+            <div class="flex items-center gap-1.5 sm:gap-2 text-[10px] font-bold text-ink-600 flex-wrap">
                 <span class="flex items-center gap-1">
-                    <span class="size-3.5 rounded-full border-2 border-ink-200"></span> Kosong
+                    <span class="size-3 rounded-full border-2 border-ink-200"></span> Kosong
                 </span>
                 <span class="flex items-center gap-1">
-                    <span class="size-3.5 rounded-full bg-primary-200"></span> 1-3
+                    <span class="size-3 rounded-full bg-primary-200"></span> 1-3
                 </span>
                 <span class="flex items-center gap-1">
-                    <span class="size-3.5 rounded-full bg-primary-400"></span> 4-6
+                    <span class="size-3 rounded-full bg-primary-400"></span> 4-6
                 </span>
                 <span class="flex items-center gap-1">
-                    <span class="size-3.5 rounded-full bg-sun"></span> 7/7 Sempurna
+                    <span class="size-3 rounded-full bg-sun"></span> 7/7 Sempurna
                 </span>
             </div>
         </div>
 
         {{-- Calendar Grid (7 columns: Min, Sen, Sel, Rab, Kam, Jum, Sab) --}}
-        <div class="pt-2">
-            <div class="grid grid-cols-7 gap-1.5 sm:gap-2.5 text-center">
+        <div class="pt-2 overflow-x-auto scrollbar-none">
+            <div class="grid grid-cols-7 gap-1 sm:gap-2 text-center min-w-[280px]">
                 @foreach(['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'] as $dayHeader)
                     <span class="text-xs font-black text-ink-400 uppercase pb-2">
                         {{ $dayHeader }}
@@ -122,13 +122,13 @@
                         default => 'chip-status-perlu',
                     };
                 @endphp
-                <div class="card p-4 sm:p-5 border border-ink-100 shadow-card flex flex-col justify-between">
+                <div class="card p-4 sm:p-5 border border-ink-100 shadow-card flex flex-col justify-between overflow-hidden">
                     <div>
-                        <div class="flex items-start justify-between mb-2">
-                            <div class="size-10 rounded-2xl {{ $h->soft_color }} flex items-center justify-center p-0.5 shadow-xs">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <div class="size-10 rounded-2xl {{ $h->soft_color }} flex items-center justify-center p-0.5 shadow-xs shrink-0">
                                 <x-mascot-habit :habit="$h->slug" size="xs" />
                             </div>
-                            <span class="{{ $statusClass }} text-[10px] py-0.5 px-2 font-black">
+                            <span class="{{ $statusClass }} text-[10px] py-0.5 px-2 font-black shrink-0">
                                 {{ $status }}
                             </span>
                         </div>
@@ -154,9 +154,9 @@
     </div>
 
     {{-- Transparent XP Logs (FR-GAM / FR-ADM) --}}
-    <div class="card p-5 sm:p-6 border border-ink-100 shadow-card space-y-3">
-        <div class="flex items-center justify-between">
-            <h3 class="font-extrabold text-ink-900 text-base flex items-center gap-2">
+    <div class="card p-4 sm:p-6 border border-ink-100 shadow-card space-y-3 overflow-hidden">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+            <h3 class="font-extrabold text-ink-900 text-sm sm:text-base flex items-center gap-2">
                 <span>⭐</span> Riwayat Perolehan XP Terbaru
             </h3>
             <span class="text-xs font-bold text-ink-500">Total: <strong class="text-amber-700">{{ number_format($user->xp) }} XP</strong></span>
@@ -164,7 +164,7 @@
 
         <div class="divide-y divide-ink-100 text-xs">
             @forelse($xpLogs as $log)
-                <div class="py-2.5 flex items-center justify-between gap-3">
+                <div class="py-2.5 flex items-center justify-between gap-2">
                     <div class="flex items-center gap-2 min-w-0">
                         <span class="text-base shrink-0">
                             @switch($log->source)
@@ -177,7 +177,7 @@
                         </span>
                         <div class="min-w-0">
                             <p class="font-bold text-ink-900 truncate">{{ $log->description }}</p>
-                            <span class="text-[10px] text-ink-400 font-semibold">
+                            <span class="text-[10px] text-ink-400 font-semibold block truncate">
                                 {{ Carbon\Carbon::parse($log->date)->locale('id')->isoFormat('dddd, D MMMM Y') }}
                             </span>
                         </div>

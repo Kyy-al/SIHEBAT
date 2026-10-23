@@ -9,7 +9,7 @@
     $todayNavJournal = $navUser ? \App\Models\Journal::where('user_id', $navUser->id)->where('date', $todayDateStr)->first() : null;
     $needsJournalToday = !$todayNavJournal || ($todayNavJournal->habits_completed < 7);
 @endphp
-<div class="flex min-h-dvh">
+<div class="flex min-h-dvh w-full max-w-full overflow-x-hidden">
     {{-- Sidebar (desktop) --}}
     <aside class="hidden lg:flex lg:flex-col lg:w-60 bg-white border-r border-ink-100 p-4 fixed inset-y-0 left-0 z-40">
         {{-- Logo --}}
@@ -81,7 +81,7 @@
     </aside>
 
     {{-- Main content --}}
-    <main class="flex-1 lg:ml-60 pb-24 lg:pb-8">
+    <main class="flex-1 w-full min-w-0 max-w-full overflow-x-hidden lg:ml-60 pb-24 lg:pb-8">
         @yield('content')
     </main>
 

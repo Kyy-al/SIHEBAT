@@ -3,7 +3,7 @@
 @section('title', 'Profil Saya — SiHebat')
 
 @section('content')
-<div class="max-w-4xl mx-auto px-4 py-4 sm:py-6 space-y-6"
+<div class="max-w-4xl mx-auto px-3.5 sm:px-4 py-4 sm:py-6 space-y-6 w-full max-w-full overflow-x-hidden"
      x-data="{
         avatarModal: false,
         previewUrl: null,

@@ -3,7 +3,7 @@
 @section('title', 'Isi Jurnal Hari Ini — SiHebat')
 
 @section('content')
-<div class="max-w-3xl mx-auto px-4 py-4 sm:py-6" id="journal-app">
+<div class="max-w-3xl mx-auto px-3.5 sm:px-4 py-4 sm:py-6 w-full max-w-full overflow-x-hidden" id="journal-app">
     {{-- Top Navigation / Back & Date Switcher --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <a href="{{ route('siswa.dashboard') }}" class="btn-ghost text-sm flex items-center gap-1 self-start">
